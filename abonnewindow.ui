@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AbonneWindow</class>
+ <widget class="QMainWindow" name="AbonneWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>900</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Gestion des Abonnés</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout">
+    <!-- Title -->
+    <item>
+     <widget class="QLabel" name="labelTitle">
+      <property name="text">
+       <string>Gestion des Abonnés</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignHCenter|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+
+    <!-- Search Field -->
+    <item>
+     <layout class="QHBoxLayout">
+      <item>
+       <widget class="QLineEdit" name="lineEdit_search">
+        <property name="placeholderText">
+         <string>Entrez l'ID pour rechercher ou supprimer</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_search">
+        <property name="text">
+         <string>Rechercher</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+
+    <!-- Table -->
+    <item>
+     <widget class="QTableView" name="tableWidget"/>
+    </item>
+
+    <!-- Input Fields -->
+    <item>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
+       <widget class="QLineEdit" name="lineEdit_nom">
+        <property name="placeholderText">
+         <string>Nom</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="lineEdit_prenom">
+        <property name="placeholderText">
+         <string>Prénom</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLineEdit" name="lineEdit_adresse">
+        <property name="placeholderText">
+         <string>Adresse</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEdit_tel">
+        <property name="placeholderText">
+         <string>Téléphone</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLineEdit" name="lineEdit_mail">
+        <property name="placeholderText">
+         <string>Email</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QDateEdit" name="dateEdit_naissance"/>
+      </item>
+     </layout>
+    </item>
+
+    <!-- Action Buttons -->
+    <item>
+     <layout class="QHBoxLayout">
+      <item>
+       <widget class="QPushButton" name="pushButton_ajouter">
+        <property name="text"><string>Ajouter</string></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_modifier">
+        <property name="text"><string>Modifier</string></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_supprimer">
+        <property name="text"><string>Supprimer</string></property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

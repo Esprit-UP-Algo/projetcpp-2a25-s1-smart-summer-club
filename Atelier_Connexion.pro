@@ -28,16 +28,25 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     abonne.cpp \
-    connection.cpp
+    connection.cpp \
+    employee.cpp \
+    employeewindow.cpp \
+    abonnewindow.cpp
 
 HEADERS += \
     mainwindow.h \
     abonne.h \
-    connection.h
+    connection.h \
+    employee.h \
+    employeewindow.h \
+    abonnewindow.h
 
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+        abonnewindow.ui \
+        employeewindow.ui
+
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -2,22 +2,32 @@
 #define ABONNE_H
 
 #include <QString>
-#include <QSqlQuery>
 #include <QSqlQueryModel>
+#include <QDate>
 
-class Abonne {
+class Abonne
+{
 private:
     int id_abonne;
-    QString nom, prenom, adresse, telephone, email, date_naissance;
+    QString nom, prenom, adresse, telephone, email;
+    QDate date_naissance;
 
 public:
-    Abonne() {}
-    Abonne(QString nom, QString prenom, QString adresse, QString telephone, QString email, QString date_naissance);
+    Abonne();
+    Abonne(int, QString, QString, QDate, QString, QString, QString);
+
+    int getId() const;
+    QString getNom() const;
+    QString getPrenom() const;
+    QDate getDateNaissance() const;
+    QString getAdresse() const;
+    QString getTelephone() const;
+    QString getEmail() const;
 
     bool ajouter();
-    QSqlQueryModel* afficher();
-    bool modifier(int id);
-    bool supprimer(int id);
+    bool supprimer(int);
+    bool modifier();
+    QSqlQueryModel *afficher();
 };
 
 #endif // ABONNE_H
