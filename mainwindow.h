@@ -51,6 +51,7 @@ private:
     void exporterPDF();
     void genererQRCode(int idInscription);
     void initialiserStatistiques();
+    void configurerBaseDeDonnees();
 };
 
 #endif // MAINWINDOW_H

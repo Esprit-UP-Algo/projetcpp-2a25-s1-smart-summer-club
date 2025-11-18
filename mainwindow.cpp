@@ -2,7 +2,9 @@
 #include "ui_mainwindow.h"
 #include "inscription.h"
 #include "databasemanager.h"
+#include "databaseconfigdialog.h"
 #include <QSqlQuery>
+#include <QSqlError>
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QStandardItemModel>
@@ -19,6 +21,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QFile>
+#ifdef QT_CHARTS_AVAILABLE
 #include <QtCharts/QChart>
 #include <QtCharts/QChartView>
 #include <QtCharts/QBarSet>
@@ -27,6 +30,7 @@
 #include <QtCharts/QValueAxis>
 #include <QtCharts/QPieSeries>
 #include <QtCharts/QPieSlice>
+#endif
 #include <QDate>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -34,6 +38,10 @@
 #include <QGroupBox>
 #include <QDateTime>
 #include <QDebug>
+#include <QMenu>
+#include <QMenuBar>
+#include <QAction>
+#include <QMetaType>
 
 // Pour QR Code - Utilisation simple avec QPainter
 #include <QImage>
@@ -58,6 +66,12 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     initialiserUI();
+    
+    // Créer le menu pour la configuration de la base de données
+    QMenu *dbMenu = menuBar()->addMenu("Base de Données");
+    QAction *configAction = dbMenu->addAction("Configurer la connexion...");
+    connect(configAction, &QAction::triggered, this, &MainWindow::configurerBaseDeDonnees);
+    
     chargerDonnees();
     initialiserStatistiques();
 }
@@ -102,10 +116,20 @@ void MainWindow::chargerInscriptions(const QString &filter, const QString &sortC
 
     QSqlQuery query(DatabaseManager::instance().getDatabase());
     
-    QString sql = "SELECT i.*, a.nom as nom_abonne, a.prenom as prenom_abonne, act.nom as nom_activite, act.prix as prix_activite "
-                   "FROM inscriptions i "
-                   "JOIN abonnes a ON i.id_abonne = a.id_abonne "
-                   "JOIN activites act ON i.id_activite = act.id_activite ";
+    QString sql;
+    if (DatabaseManager::instance().getDatabaseType() == DatabaseManager::Oracle) {
+        // Pour Oracle, formater la date avec TO_CHAR
+        sql = "SELECT i.*, a.nom as nom_abonne, a.prenom as prenom_abonne, act.nom as nom_activite, act.prix as prix_activite, "
+              "TO_CHAR(i.date_inscription, 'YYYY-MM-DD') as date_inscription "
+              "FROM inscriptions i "
+              "JOIN abonnes a ON i.id_abonne = a.id_abonne "
+              "JOIN activites act ON i.id_activite = act.id_activite ";
+    } else {
+        sql = "SELECT i.*, a.nom as nom_abonne, a.prenom as prenom_abonne, act.nom as nom_activite, act.prix as prix_activite "
+              "FROM inscriptions i "
+              "JOIN abonnes a ON i.id_abonne = a.id_abonne "
+              "JOIN activites act ON i.id_activite = act.id_activite ";
+    }
     
     // Ajouter le filtre de recherche
     if (!filter.isEmpty()) {
@@ -138,7 +162,22 @@ void MainWindow::chargerInscriptions(const QString &filter, const QString &sortC
         row << new QStandardItem(nomComplet);
 
         row << new QStandardItem(query.value("nom_activite").toString());
-        row << new QStandardItem(query.value("date_inscription").toDate().toString("dd/MM/yyyy"));
+        
+        // Formater la date selon le type de base de données
+        QString dateStr;
+        if (DatabaseManager::instance().getDatabaseType() == DatabaseManager::Oracle) {
+            // Oracle retourne déjà une date formatée ou on peut utiliser TO_CHAR
+            QVariant dateValue = query.value("date_inscription");
+            if (dateValue.typeId() == QMetaType::QDate) {
+                dateStr = dateValue.toDate().toString("dd/MM/yyyy");
+            } else {
+                dateStr = dateValue.toString();
+            }
+        } else {
+            dateStr = query.value("date_inscription").toDate().toString("dd/MM/yyyy");
+        }
+        row << new QStandardItem(dateStr);
+        
         row << new QStandardItem(query.value("statut").toString());
         row << new QStandardItem(query.value("paiement_effectue").toBool() ? "Oui" : "Non");
         row << new QStandardItem(QString::number(query.value("prix").toDouble(), 'f', 2) + " €");
@@ -238,6 +277,7 @@ void MainWindow::initialiserStatistiques()
     // Layout principal
     QVBoxLayout *mainLayout = new QVBoxLayout(statsWidget);
     
+#ifdef QT_CHARTS_AVAILABLE
     // Graphique en barres - Inscriptions par statut
     QChart *chartStatut = new QChart();
     chartStatut->setTitle("Répartition des inscriptions par statut");
@@ -307,6 +347,70 @@ void MainWindow::initialiserStatistiques()
     // Ajouter les graphiques au layout
     mainLayout->addWidget(chartView);
     mainLayout->addWidget(pieChartView);
+#else
+    // Version sans graphiques - affichage textuel des statistiques
+    QSqlQuery query(DatabaseManager::instance().getDatabase());
+    
+    QLabel *titleLabel = new QLabel("Statistiques des Inscriptions");
+    QFont titleFont;
+    titleFont.setPointSize(16);
+    titleFont.setBold(true);
+    titleLabel->setFont(titleFont);
+    titleLabel->setAlignment(Qt::AlignCenter);
+    mainLayout->addWidget(titleLabel);
+    
+    // Total inscriptions
+    query.exec("SELECT COUNT(*) FROM inscriptions");
+    int total = 0;
+    if (query.next()) {
+        total = query.value(0).toInt();
+    }
+    
+    // Inscriptions confirmées
+    query.exec("SELECT COUNT(*) FROM inscriptions WHERE statut = 'confirmé'");
+    int confirme = 0;
+    if (query.next()) {
+        confirme = query.value(0).toInt();
+    }
+    
+    // En attente
+    query.exec("SELECT COUNT(*) FROM inscriptions WHERE statut = 'en attente'");
+    int enAttente = 0;
+    if (query.next()) {
+        enAttente = query.value(0).toInt();
+    }
+    
+    // Annulées
+    query.exec("SELECT COUNT(*) FROM inscriptions WHERE statut = 'annulée'");
+    int annulee = 0;
+    if (query.next()) {
+        annulee = query.value(0).toInt();
+    }
+    
+    // Revenus totaux
+    query.exec("SELECT SUM(prix) FROM inscriptions WHERE paiement_effectue = 1");
+    double revenus = 0.0;
+    if (query.next()) {
+        revenus = query.value(0).toDouble();
+    }
+    
+    // Afficher les statistiques
+    QLabel *statsLabel = new QLabel(
+        QString("<h3>Résumé</h3>"
+                "<p><b>Total inscriptions:</b> %1</p>"
+                "<p><b>Confirmées:</b> %2</p>"
+                "<p><b>En attente:</b> %3</p>"
+                "<p><b>Annulées:</b> %4</p>"
+                "<p><b>Revenus totaux:</b> %5 €</p>"
+                "<hr>"
+                "<p><i>Note: Pour activer les graphiques, installez Qt Charts via Qt Maintenance Tool</i></p>")
+        .arg(total).arg(confirme).arg(enAttente).arg(annulee).arg(QString::number(revenus, 'f', 2))
+    );
+    statsLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    mainLayout->addWidget(statsLabel);
+    
+    mainLayout->addStretch();
+#endif
     
     statsWidget->setLayout(mainLayout);
 }
@@ -703,4 +807,43 @@ void MainWindow::on_pushButton_refresh_table_clicked()
     currentSortColumn = "date_inscription";
     currentSortOrder = Qt::DescendingOrder;
     chargerInscriptions();
+}
+
+void MainWindow::configurerBaseDeDonnees()
+{
+    DatabaseConfigDialog dialog(this);
+    
+    if (dialog.exec() == QDialog::Accepted) {
+        QString dbType = dialog.getDatabaseType();
+        
+        if (dbType.contains("Oracle")) {
+            // Connexion Oracle
+            QString host = dialog.getHost();
+            int port = dialog.getPort();
+            QString dbName = dialog.getDatabaseName();
+            QString user = dialog.getUser();
+            QString password = dialog.getPassword();
+            
+            if (DatabaseManager::instance().initializeOracleDatabase(host, port, dbName, user, password)) {
+                QMessageBox::information(this, "Succès", 
+                    "Connexion à Oracle établie avec succès!\n"
+                    "Les tables seront créées automatiquement si elles n'existent pas.");
+                
+                // Recharger les données
+                chargerDonnees();
+                initialiserStatistiques();
+            } else {
+                QMessageBox::critical(this, "Erreur", 
+                    "Impossible de se connecter à Oracle.\n"
+                    "Vérifiez vos paramètres de connexion.");
+            }
+        } else {
+            // SQLite par défaut
+            if (DatabaseManager::instance().initializeDatabase()) {
+                QMessageBox::information(this, "Succès", "Connexion SQLite établie.");
+                chargerDonnees();
+                initialiserStatistiques();
+            }
+        }
+    }
 }

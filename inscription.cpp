@@ -145,10 +145,21 @@ bool Inscription::ajouter() const
     const double prixFinal = calculerPrixFinal(id_abonne, id_activite, prix);
 
     QSqlQuery query(DatabaseManager::instance().getDatabase());
-    query.prepare(
-        "INSERT INTO inscriptions "
-        "(id_abonne, id_activite, date_inscription, statut, paiement_effectue, prix) "
-        "VALUES (:id_abonne, :id_activite, :date_inscription, :statut, :paiement_effectue, :prix)");
+    
+    // Adapter selon le type de base de données
+    if (DatabaseManager::instance().getDatabaseType() == DatabaseManager::Oracle) {
+        // Pour Oracle, utiliser TO_DATE pour la conversion de date
+        query.prepare(
+            "INSERT INTO inscriptions "
+            "(id_abonne, id_activite, date_inscription, statut, paiement_effectue, prix) "
+            "VALUES (:id_abonne, :id_activite, TO_DATE(:date_inscription, 'YYYY-MM-DD'), :statut, :paiement_effectue, :prix)");
+    } else {
+        // SQLite
+        query.prepare(
+            "INSERT INTO inscriptions "
+            "(id_abonne, id_activite, date_inscription, statut, paiement_effectue, prix) "
+            "VALUES (:id_abonne, :id_activite, :date_inscription, :statut, :paiement_effectue, :prix)");
+    }
 
     query.bindValue(":id_abonne", id_abonne);
     query.bindValue(":id_activite", id_activite);
@@ -182,15 +193,29 @@ bool Inscription::modifier() const
     const double prixFinal = calculerPrixFinal(id_abonne, id_activite, prix);
 
     QSqlQuery query(DatabaseManager::instance().getDatabase());
-    query.prepare(
-        "UPDATE inscriptions SET "
-        "id_abonne = :id_abonne, "
-        "id_activite = :id_activite, "
-        "date_inscription = :date_inscription, "
-        "statut = :statut, "
-        "paiement_effectue = :paiement_effectue, "
-        "prix = :prix "
-        "WHERE id_inscription = :id_inscription");
+    
+    // Adapter selon le type de base de données
+    if (DatabaseManager::instance().getDatabaseType() == DatabaseManager::Oracle) {
+        query.prepare(
+            "UPDATE inscriptions SET "
+            "id_abonne = :id_abonne, "
+            "id_activite = :id_activite, "
+            "date_inscription = TO_DATE(:date_inscription, 'YYYY-MM-DD'), "
+            "statut = :statut, "
+            "paiement_effectue = :paiement_effectue, "
+            "prix = :prix "
+            "WHERE id_inscription = :id_inscription");
+    } else {
+        query.prepare(
+            "UPDATE inscriptions SET "
+            "id_abonne = :id_abonne, "
+            "id_activite = :id_activite, "
+            "date_inscription = :date_inscription, "
+            "statut = :statut, "
+            "paiement_effectue = :paiement_effectue, "
+            "prix = :prix "
+            "WHERE id_inscription = :id_inscription");
+    }
 
     query.bindValue(":id_abonne", id_abonne);
     query.bindValue(":id_activite", id_activite);
