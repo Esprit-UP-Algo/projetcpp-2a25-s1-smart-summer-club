@@ -4,6 +4,7 @@
 #include <QString>
 
 class QSqlQueryModel;
+class QSqlDatabase;
 
 class Inscription
 {
@@ -12,8 +13,8 @@ private:
     int id_abonne;
     int id_activite;
     QString date_inscription;   // format: "yyyy-MM-dd"
-    QString statut;             // En attente | Confirmée | Annulée
-    bool paiement;
+    QString statut;             // confirmé | en attente | annulée
+    bool paiement_effectue;
     double prix;
 
 public:
@@ -21,7 +22,7 @@ public:
     Inscription();
     Inscription(int id_inscription, int id_abonne, int id_activite,
                 const QString& date_inscription, const QString& statut,
-                bool paiement, double prix);
+                bool paiement_effectue, double prix);
 
     // Getters
     int getIdInscription() const;
@@ -29,7 +30,7 @@ public:
     int getIdActivite() const;
     QString getDateInscription() const;
     QString getStatut() const;
-    bool getPaiement() const;
+    bool getPaiementEffectue() const;
     double getPrix() const;
 
     // Setters
@@ -38,13 +39,15 @@ public:
     void setIdActivite(int);
     void setDateInscription(const QString&);
     void setStatut(const QString&);
-    void setPaiement(bool);
+    void setPaiementEffectue(bool);
     void setPrix(double);
 
     // Méthodes CRUD
     bool ajouter() const;
     bool modifier() const;
-    bool supprimer(int id) const;
+    bool supprimer() const;  // Supprime l'inscription courante
+    bool sauvegarder() const; // Sauvegarde (ajoute ou modifie selon l'ID)
+    static Inscription* charger(int id); // Charge une inscription par ID
     QSqlQueryModel* afficher() const;
 
     // Validation
@@ -52,7 +55,7 @@ public:
 
     // Métiers/utilitaires
     bool existeDoublon(int idAbonne, int idActivite, int saufId = 0) const;
-    int placesRestantesPourActivite(int idActivite) const; // nécessite table activites(capacite_max)
+    int placesRestantesPourActivite(int idActivite) const;
     double calculerPrixFinal(int idAbonne, int idActivite, double prixBase) const;
 };
 

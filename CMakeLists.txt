@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(smart-summer-club LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets LinguistTools)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets LinguistTools Sql Charts)
 
 qt_standard_project_setup()
 
@@ -13,6 +13,8 @@ qt_add_executable(smart-summer-club
     mainwindow.ui
     inscription.cpp
     inscription.h
+    databasemanager.cpp
+    databasemanager.h
 )
 
 qt_add_translations(
@@ -24,6 +26,8 @@ target_link_libraries(smart-summer-club
     PRIVATE
         Qt::Core
         Qt::Widgets
+        Qt::Sql
+        Qt::Charts
 )
 
 include(GNUInstallDirs)
