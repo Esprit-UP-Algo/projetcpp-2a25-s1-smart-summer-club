@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AbonneWindow</class>
+ <widget class="QMainWindow" name="AbonneWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>900</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Gestion des Abonnés</string>
+  </property>
+
+  <!-- STYLE GLOBAL: bleu ciel / orange / noir -->
+  <property name="styleSheet">
+   <string notr="true">
+    QMainWindow {
+        background-color: #E3F2FD;      /* bleu ciel très clair */
+    }
+
+    QLabel#labelTitle {
+        color: #0D47A1;                 /* bleu plus foncé pour le titre */
+        font-size: 26px;
+        font-weight: bold;
+    }
+
+    QLabel {
+        color: #0D47A1;
+        font-weight: 500;
+    }
+
+    /* Champs de saisie */
+    QLineEdit {
+        background-color: #FFFFFF;
+        color: #000000;
+        border: 1px solid #90CAF9;      /* bleu ciel */
+        border-radius: 6px;
+        padding: 4px 8px;
+    }
+    QLineEdit:focus {
+        border: 1px solid #FF8C32;      /* orange */
+    }
+
+    QDateEdit {
+        background-color: #FFFFFF;
+        color: #000000;
+        border: 1px solid #90CAF9;
+        border-radius: 6px;
+        padding: 2px 6px;
+    }
+    QDateEdit::down-arrow {
+        image: none;
+    }
+
+    /* Table d'affichage */
+    QTableView#tableWidget {
+        background-color: #FFFFFF;
+        color: #000000;
+        gridline-color: #90CAF9;
+        selection-background-color: #FFB74D;   /* orange clair sélection */
+        selection-color: #000000;
+        border: 1px solid #90CAF9;
+        alternate-background-color: #E3F2FD;
+    }
+
+    /* En-têtes de la table */
+    QHeaderView::section {
+        background-color: #BBDEFB;
+        color: #0D47A1;
+        padding: 4px;
+        border: none;
+        border-right: 1px solid #90CAF9;
+    }
+
+    /* Boutons – tous orange, même supprimer + trier + exportation */
+    QPushButton {
+        background-color: #FF8C32;      /* orange */
+        color: #000000;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-weight: bold;
+    }
+    QPushButton:hover {
+        background-color: #FFA857;
+    }
+    QPushButton:pressed {
+        background-color: #CC6F25;
+    }
+
+    /* Ligne de recherche */
+    QLineEdit#lineEdit_search {
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        padding-left: 10px;
+    }
+
+    /* GroupBox infos abonné */
+    QGroupBox {
+        color: #0D47A1;
+        border: 1px solid #90CAF9;
+        border-radius: 8px;
+        margin-top: 8px;
+        background-color: #EAF4FF;
+    }
+    QGroupBox::title {
+        subcontrol-origin: margin;
+        left: 10px;
+        padding: 0 4px;
+    }
+   </string>
+  </property>
+
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout">
+    <!-- Title -->
+    <item>
+     <widget class="QLabel" name="labelTitle">
+      <property name="text">
+       <string>Gestion des Abonnés</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignHCenter|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+
+    <!-- Search Field + Button -->
+    <item>
+     <layout class="QHBoxLayout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_search">
+        <property name="minimumHeight">
+         <number>32</number>
+        </property>
+        <property name="placeholderText">
+         <string>Entrez l'ID pour rechercher ou supprimer</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_search">
+        <property name="minimumHeight">
+         <number>32</number>
+        </property>
+        <property name="text">
+         <string>Rechercher</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+
+    <!-- Table -->
+    <item>
+     <widget class="QTableView" name="tableWidget">
+      <property name="alternatingRowColors">
+       <bool>true</bool>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectRows</enum>
+      </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::SingleSelection</enum>
+      </property>
+     </widget>
+    </item>
+
+    <!-- Group des champs (Input Fields) avec labels -->
+    <item>
+     <widget class="QGroupBox">
+      <property name="title">
+       <string>Informations Abonné</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <!-- Nom -->
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_nom">
+         <property name="text">
+          <string>Nom :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="lineEdit_nom">
+         <property name="placeholderText">
+          <string>Nom</string>
+         </property>
+        </widget>
+       </item>
+
+       <!-- Prénom -->
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_prenom">
+         <property name="text">
+          <string>Prénom :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="lineEdit_prenom">
+         <property name="placeholderText">
+          <string>Prénom</string>
+         </property>
+        </widget>
+       </item>
+
+       <!-- Adresse -->
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_adresse">
+         <property name="text">
+          <string>Adresse :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="lineEdit_adresse">
+         <property name="placeholderText">
+          <string>Adresse</string>
+         </property>
+        </widget>
+       </item>
+
+       <!-- Téléphone -->
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_tel">
+         <property name="text">
+          <string>Téléphone :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="lineEdit_tel">
+         <property name="placeholderText">
+          <string>Téléphone</string>
+         </property>
+        </widget>
+       </item>
+
+       <!-- Email -->
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_mail">
+         <property name="text">
+          <string>Email :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QLineEdit" name="lineEdit_mail">
+         <property name="placeholderText">
+          <string>Email</string>
+         </property>
+        </widget>
+       </item>
+
+       <!-- Date de naissance -->
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_naissance">
+         <property name="text">
+          <string>Date de naissance :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QDateEdit" name="dateEdit_naissance">
+         <property name="displayFormat">
+          <string>dd/MM/yyyy</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+
+    <!-- Zone Trier par (LineEdit + bouton) -->
+    <item>
+     <layout class="QHBoxLayout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label_trier">
+        <property name="text">
+         <string>Trier par :</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_trier">
+        <property name="placeholderText">
+         <string>Ex : nom, prenom, adresse...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_trier">
+        <property name="text">
+         <string>Trier</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+
+    <!-- Action Buttons alignés au centre (avec Exportation PDF + Statistique + Historique) -->
+    <item>
+     <layout class="QHBoxLayout">
+      <property name="spacing">
+       <number>20</number>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignHCenter</set>
+      </property>
+      <item>
+       <widget class="QPushButton" name="pushButton_ajouter">
+        <property name="minimumWidth">
+         <number>120</number>
+        </property>
+        <property name="text">
+         <string>Ajouter</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_modifier">
+        <property name="minimumWidth">
+         <number>120</number>
+        </property>
+        <property name="text">
+         <string>Modifier</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_supprimer">
+        <property name="minimumWidth">
+         <number>120</number>
+        </property>
+        <property name="text">
+         <string>Supprimer</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_export_pdf">
+        <property name="minimumWidth">
+         <number>150</number>
+        </property>
+        <property name="text">
+         <string>Exportation PDF</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_statistique">
+        <property name="minimumWidth">
+         <number>150</number>
+        </property>
+        <property name="text">
+         <string>Statistique</string>
+        </property>
+       </widget>
+      </item>
+      <!-- 🔹 Nouveau bouton Historique -->
+      <item>
+       <widget class="QPushButton" name="pushButton_historique">
+        <property name="minimumWidth">
+         <number>150</number>
+        </property>
+        <property name="text">
+         <string>Historique</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

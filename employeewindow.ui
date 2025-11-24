@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>EmployeeWindow</class>
+ <widget class="QMainWindow" name="EmployeeWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>900</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Gestion Employee</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTableView" name="tableView">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>860</width>
+      <height>250</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_nom">
+    <property name="geometry"><rect><x>100</x><y>290</y><width>200</width><height>25</height></rect></property>
+    <property name="placeholderText"><string>Nom</string></property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_prenom">
+    <property name="geometry"><rect><x>100</x><y>330</y><width>200</width><height>25</height></rect></property>
+    <property name="placeholderText"><string>Prénom</string></property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_poste">
+    <property name="geometry"><rect><x>400</x><y>290</y><width>200</width><height>25</height></rect></property>
+    <property name="placeholderText"><string>Poste</string></property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_fonction">
+    <property name="geometry"><rect><x>400</x><y>330</y><width>200</width><height>25</height></rect></property>
+    <property name="placeholderText"><string>Fonction</string></property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_genre">
+    <property name="geometry"><rect><x>100</x><y>370</y><width>200</width><height>25</height></rect></property>
+    <property name="placeholderText"><string>Genre</string></property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_mail">
+    <property name="geometry"><rect><x>400</x><y>370</y><width>200</width><height>25</height></rect></property>
+    <property name="placeholderText"><string>Email</string></property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_tel">
+    <property name="geometry"><rect><x>100</x><y>410</y><width>200</width><height>25</height></rect></property>
+    <property name="placeholderText"><string>Téléphone</string></property>
+   </widget>
+   <widget class="QDateEdit" name="dateEdit_naissance">
+    <property name="geometry"><rect><x>400</x><y>410</y><width>200</width><height>25</height></rect></property>
+    <property name="displayFormat"><string>yyyy-MM-dd</string></property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_adresse">
+    <property name="geometry"><rect><x>100</x><y>450</y><width>200</width><height>25</height></rect></property>
+    <property name="placeholderText"><string>Adresse</string></property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_salaire">
+    <property name="geometry"><rect><x>400</x><y>450</y><width>200</width><height>25</height></rect></property>
+    <property name="placeholderText"><string>Salaire</string></property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_ajouter">
+    <property name="geometry"><rect><x>650</x><y>290</y><width>100</width><height>30</height></rect></property>
+    <property name="text"><string>Ajouter</string></property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_modifier">
+    <property name="geometry"><rect><x>650</x><y>340</y><width>100</width><height>30</height></rect></property>
+    <property name="text"><string>Modifier</string></property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_supprimer">
+    <property name="geometry"><rect><x>650</x><y>390</y><width>100</width><height>30</height></rect></property>
+    <property name="text"><string>Supprimer</string></property>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

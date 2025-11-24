@@ -1,7 +1,2 @@
-# Ignorer les fichiers employés
-employe.h
-employe.cpp
-employewindow.ui
-employewindow.cpp
-employewindow.h
-
+Atelier_Connexion.pro.user
+build/
