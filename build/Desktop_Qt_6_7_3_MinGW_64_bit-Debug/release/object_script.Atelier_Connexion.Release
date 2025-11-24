@@ -1,0 +1,12 @@
+release/main.o
+release/mainwindow.o
+release/abonne.o
+release/connection.o
+release/employee.o
+release/employeewindow.o
+release/abonnewindow.o
+release/smtp.o
+release/moc_mainwindow.o
+release/moc_employeewindow.o
+release/moc_abonnewindow.o
+release/moc_smtp.o
