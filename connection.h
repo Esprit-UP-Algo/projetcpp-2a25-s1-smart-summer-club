@@ -9,8 +9,8 @@
 class Connection
 {
 public:
-    Connection();          // Constructeur
-    bool createconnect();  // Fonction pour établir la connexion
+    Connection();
+    bool createconnect();
 };
 
 #endif // CONNECTION_H

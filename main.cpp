@@ -1,30 +1,32 @@
+#include "connection.h"
+#include "login.h"
 #include "mainwindow.h"
+
 #include <QApplication>
 #include <QMessageBox>
-#include "connection.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    // Connexion BD
     Connection c;
     bool test = c.createconnect();
 
-    if (test) {
-        QMessageBox::information(nullptr,
-                                 QObject::tr("Connexion réussie"),
-                                 QObject::tr("✅ Connexion à la base de données réussie.\n"
-                                             "Cliquez sur OK pour continuer."));
-    } else {
-        QMessageBox::critical(nullptr,
-                              QObject::tr("Erreur de connexion"),
-                              QObject::tr("❌ La connexion à la base de données a échoué.\n"
-                                          "Vérifiez le DSN, l'utilisateur ou le mot de passe."));
-        return -1; // stoppe le programme si échec
+    if (!test) {
+        QMessageBox::critical(nullptr, "Erreur", "Impossible de se connecter à la base !");
+        return 0;
     }
 
-    MainWindow w;
-    w.show();
+    Login log;
+    if (log.exec() == QDialog::Accepted)
+    {
+        MainWindow *w = new MainWindow(nullptr,
+                                       log.getPosteBD(),
+                                       log.getIdEmploye());
+        w->show();
+        return a.exec();
+    }
 
-    return a.exec();
+    return 0;
 }
