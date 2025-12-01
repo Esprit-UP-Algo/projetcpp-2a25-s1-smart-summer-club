@@ -28,8 +28,10 @@
 #include <QAbstractItemView>
 #include <QInputDialog>
 #include <QTimer>
-#include "login.h"
+#include <QApplication>
+#include <QPushButton>
 
+#include "login.h"
 
 // ================= CONSTRUCTEUR / DESTRUCTEUR =================
 
@@ -38,36 +40,42 @@ MainWindow::MainWindow(QWidget *parent,
                        int idUser)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_posteUser(posteUser.toLower().trimmed())
+    , m_posteUser(posteUser.toLower())
     , m_idUser(idUser)
 {
     ui->setupUi(this);
 
-    ui->lineEdit_7->setPlaceholderText("H ou F");
-    ui->lineEdit_8->setPlaceholderText("exemple@gmail.com");
-    ui->lineEdit_10->setPlaceholderText("12345678");
-    ui->lineEdit_11->setPlaceholderText("JJ/MM/AAAA");
+    // cacher tous les boutons du menu
+    ui->pushButton->hide();   // employés
+    ui->pushButton_2->hide(); // activité
+    ui->pushButton_3->hide(); // abonnés
+    ui->pushButton_4->hide(); // inscription
+    ui->pushButton_5->hide(); // matériel
 
-    // Désactiver certains boutons selon les droits
-    if (!aLeDroit("ajouter"))
-        ui->pushButton_ajouter->setEnabled(false);
-    if (!aLeDroit("modifier"))
-        ui->pushButton_6->setEnabled(false);
-    if (!aLeDroit("supprimer"))
-        ui->pushButton_7->setEnabled(false);
-    if (!aLeDroit("voir_tout")) {
-        ui->pushButton_11->setEnabled(false); // recherche
-        ui->pushButton_12->setEnabled(false); // tri
-    }
+    // Afficher uniquement le bouton correspondant au rôle
+    QString r = m_posteUser;
 
-    // =====================
-    // 🚨 AJOUT DES PROTECTIONS MENU
-    // =====================
-    connect(ui->pushButton,   &QPushButton::clicked, this, &MainWindow::onMenuButtonClicked); // employés
-    connect(ui->pushButton_2, &QPushButton::clicked, this, &MainWindow::onMenuButtonClicked); // activité
-    connect(ui->pushButton_3, &QPushButton::clicked, this, &MainWindow::onMenuButtonClicked); // abonnés
-    connect(ui->pushButton_5, &QPushButton::clicked, this, &MainWindow::onMenuButtonClicked); // matériel
-    connect(ui->pushButton_4, &QPushButton::clicked, this, &MainWindow::onMenuButtonClicked); // inscription
+    if (r.contains("responsable rh"))
+        ui->pushButton->show();       // employés
+
+    if (r.contains("responsable club"))
+        ui->pushButton_2->show();     // activité
+
+    if (r.contains("administrateur"))
+        ui->pushButton_3->show();     // abonnés
+
+    if (r.contains("comptable"))
+        ui->pushButton_4->show();     // inscription
+
+    if (r.contains("responsable ro"))
+        ui->pushButton_5->show();     // matériel
+
+    // Connexions des boutons du menu
+    connect(ui->pushButton,   &QPushButton::clicked, this, &MainWindow::onMenuButtonClicked);
+    connect(ui->pushButton_2, &QPushButton::clicked, this, &MainWindow::onMenuButtonClicked);
+    connect(ui->pushButton_3, &QPushButton::clicked, this, &MainWindow::onMenuButtonClicked);
+    connect(ui->pushButton_4, &QPushButton::clicked, this, &MainWindow::onMenuButtonClicked);
+    connect(ui->pushButton_5, &QPushButton::clicked, this, &MainWindow::onMenuButtonClicked);
 
     afficherEmployes();
 }
@@ -77,9 +85,8 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
 // ===============================================================
-// GESTION MENU – BLOQUAGE DES DROITS
+// GESTION MENU – ACCÈS SELON RÔLE
 // ===============================================================
 
 void MainWindow::onMenuButtonClicked()
@@ -87,74 +94,30 @@ void MainWindow::onMenuButtonClicked()
     QPushButton *btn = qobject_cast<QPushButton*>(sender());
     if (!btn) return;
 
-    // MANAGER ou ADMIN → accès normal
-    if (m_posteUser.contains("manager") || m_posteUser.contains("administrateur"))
-    {
-        btn->setStyleSheet("");
-        return;
-    }
+    QString r = m_posteUser;
 
-    // Sinon → accès refusé
-    btn->setStyleSheet("background-color:red; color:white; font-weight:bold; border:2px solid black;");
+    // protection en plus (normalement les autres boutons sont cachés)
+    if (r.contains("responsable rh")   && btn != ui->pushButton)   return;
+    if (r.contains("responsable club") && btn != ui->pushButton_2) return;
+    if (r.contains("administrateur")   && btn != ui->pushButton_3) return;
+    if (r.contains("comptable")        && btn != ui->pushButton_4) return;
+    if (r.contains("responsable ro")   && btn != ui->pushButton_5) return;
 
-    QMessageBox::warning(this,
-                         "Accès refusé",
-                         "Vous n'avez pas la permission d'accéder à cette section.");
-
-    // Retour à la couleur normale après 1 seconde
-    QTimer::singleShot(1000, [btn]() {
-        btn->setStyleSheet("");
-    });
+    QMessageBox::information(this,
+                             "Accès autorisé",
+                             "Vous avez accès à ce module.");
 }
 
-
 // ===============================================================
-// GESTION DES DROITS
+// GESTION DES DROITS : ici on retourne toujours true
+// (tu peux plus tard réactiver des restrictions si tu veux)
 // ===============================================================
 
 bool MainWindow::aLeDroit(const QString &action)
 {
-    QString role = m_posteUser.toLower();
-
-    // MANAGER / ADMIN => tout permis
-    if (role.contains("manager") || role.contains("administrateur"))
-        return true;
-
-    // Responsable RH : pas supprimer
-    if (role.contains("responsable rh")) {
-        if (action == "supprimer")
-            return false;
-        return true;
-    }
-
-    // Comptable : pas de CRUD employés
-    if (role.contains("comptable")) {
-        if (action == "ajouter" || action == "modifier" || action == "supprimer"
-            || action == "voir_tout")
-            return false;
-        return true;
-    }
-
-    // Employés "simples"
-    if (role.contains("responsable ro") ||
-        role.contains("responsable club") ||
-        role.contains("encadrant") ||
-        role.contains("coach")) {
-
-        if (action == "ajouter" || action == "modifier" ||
-            action == "supprimer" || action == "voir_tout")
-            return false;
-
-        // export attestation pour eux-mêmes autorisé
-        if (action == "attestation")
-            return true;
-
-        return true;
-    }
-
-    return false;
+    Q_UNUSED(action);
+    return true;
 }
-
 
 // ===============================================================
 // AFFICHE EMPLOYES
@@ -164,12 +127,8 @@ void MainWindow::afficherEmployes()
 {
     QSqlQuery query;
 
-    if (aLeDroit("voir_tout")) {
-        query.prepare("SELECT * FROM SUMMER.EMPLOYE ORDER BY ID_EMPLOYE ASC");
-    } else {
-        query.prepare("SELECT * FROM SUMMER.EMPLOYE WHERE ID_EMPLOYE = :id");
-        query.bindValue(":id", m_idUser);
-    }
+    // tout le monde voit tous les employés
+    query.prepare("SELECT * FROM SUMMER.EMPLOYE ORDER BY ID_EMPLOYE ASC");
 
     if (!query.exec()) {
         QMessageBox::critical(this, "Erreur SQL",
@@ -200,7 +159,6 @@ void MainWindow::afficherEmployes()
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 }
-
 
 // ===============================================================
 // VALIDATIONS
@@ -259,20 +217,12 @@ bool MainWindow::validerDate(const QString &date)
     return true;
 }
 
-
-
 // ===============================================================
 // AJOUT EMPLOYE
 // ===============================================================
 
 void MainWindow::on_pushButton_ajouter_clicked()
 {
-    if (!aLeDroit("ajouter")) {
-        QMessageBox::warning(this, "Accès refusé",
-                             "Vous n'avez pas la permission d'ajouter un employé.");
-        return;
-    }
-
     QString id_str = ui->lineEdit_2->text().trimmed();
     QString nom = ui->lineEdit_3->text().trimmed();
     QString prenom = ui->lineEdit_4->text().trimmed();
@@ -341,12 +291,6 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
 
 void MainWindow::on_pushButton_6_clicked()
 {
-    if (!aLeDroit("modifier")) {
-        QMessageBox::warning(this, "Accès refusé",
-                             "Vous n'avez pas la permission de modifier un employé.");
-        return;
-    }
-
     QString id_str = ui->lineEdit_2->text();
     if (id_str.isEmpty()) {
         QMessageBox::warning(this, "Erreur", "Veuillez sélectionner un employé !");
@@ -393,12 +337,6 @@ void MainWindow::on_pushButton_6_clicked()
 
 void MainWindow::on_pushButton_7_clicked()
 {
-    if (!aLeDroit("supprimer")) {
-        QMessageBox::warning(this, "Accès refusé",
-                             "Vous n'avez pas la permission de supprimer un employé.");
-        return;
-    }
-
     QString id_str = ui->lineEdit_2->text();
 
     if (id_str.isEmpty()) {
@@ -424,13 +362,6 @@ void MainWindow::on_pushButton_7_clicked()
 
 void MainWindow::on_pushButton_12_clicked()
 {
-    if (!aLeDroit("voir_tout")) {
-        QMessageBox::warning(this, "Accès refusé",
-                             "Le tri global est réservé aux responsables.");
-        afficherEmployes();
-        return;
-    }
-
     QString critere = ui->comboBox_2->currentText();
     QString colonne;
 
@@ -479,7 +410,7 @@ void MainWindow::on_pushButton_12_clicked()
 }
 
 // ===============================================================
-// ATTESTATIONS - HTML SANS FILIGRANE
+// ATTESTATIONS - HTML
 // ===============================================================
 
 QString MainWindow::construireAttestationHtml(const QString &mode,
@@ -609,7 +540,7 @@ QString MainWindow::construireAttestationHtml(const QString &mode,
 }
 
 // ===============================================================
-// EXPORT PDF (ATTESATIONS)
+// EXPORT PDF
 // ===============================================================
 
 void MainWindow::on_pushButton_10_clicked()
@@ -740,13 +671,6 @@ void MainWindow::on_pushButton_imprimer_clicked()
 
 void MainWindow::on_pushButton_11_clicked()
 {
-    if (!aLeDroit("voir_tout")) {
-        QMessageBox::warning(this, "Accès refusé",
-                             "La recherche d'autres employés est réservée aux responsables.");
-        afficherEmployes();
-        return;
-    }
-
     QString id_str = ui->lineEdit_9->text().trimmed();
 
     if (id_str.isEmpty()) {
@@ -824,7 +748,9 @@ void MainWindow::on_pushButton_8_clicked()
     view->resize(700, 500);
     view->show();
 }
-// BOUTON 9 : INFO UTILISATEUR CONNECTÉ
+
+// ===============================================================
+// DECONNEXION
 // ===============================================================
 
 void MainWindow::on_pushButton_9_clicked()
@@ -862,3 +788,4 @@ void MainWindow::on_pushButton_9_clicked()
         QApplication::quit();
     }
 }
+

@@ -2,16 +2,15 @@
 #define EMPLOYE_H
 
 #include <QString>
-#include <QSqlQuery>
-#include <QSqlError>
 
 class Employe
 {
 public:
     Employe();
-    Employe(int id, QString nom, QString prenom, QString poste, QString fonction,
-            QString genre, QString email, QString telephone,
-            QString date_naissance, QString adresse, float salaire);
+    Employe(int id, QString nom, QString prenom, QString poste,
+            QString fonction, QString genre, QString email,
+            QString telephone, QString date_naissance,
+            QString adresse, float salaire);
 
     bool ajouter();
     bool modifier();
@@ -21,18 +20,10 @@ public:
 
 private:
     int id;
-    QString nom;
-    QString prenom;
-    QString poste;
-    QString fonction;
-    QString genre;
-    QString email;
-    QString telephone;
-    QString date_naissance; // OK Oracle
-    QString adresse;
+    QString nom, prenom, poste, fonction, genre;
+    QString email, telephone, date_naissance, adresse;
     float salaire;
-
     QString m_lastError;
 };
 
-#endif // EMPLOYE_H
+#endif

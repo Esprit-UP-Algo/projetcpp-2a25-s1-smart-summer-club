@@ -9,12 +9,10 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    // Connexion BD
     Connection c;
-    bool test = c.createconnect();
-
-    if (!test) {
-        QMessageBox::critical(nullptr, "Erreur", "Impossible de se connecter à la base !");
+    if (!c.createconnect()) {
+        QMessageBox::critical(nullptr, "Erreur",
+                              "Impossible de se connecter à la base !");
         return 0;
     }
 

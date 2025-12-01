@@ -1,7 +1,7 @@
 #include "connection.h"
+
 #include <QSqlDatabase>
 #include <QSqlError>
-#include <QSqlQuery>
 #include <QDebug>
 #include <QMessageBox>
 
@@ -14,7 +14,7 @@ bool Connection::createconnect()
     bool test = false;
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");
-    db.setDatabaseName("projet25");
+    db.setDatabaseName("projet25");   // ton DSN ODBC
     db.setUserName("summer");
     db.setPassword("smart");
 

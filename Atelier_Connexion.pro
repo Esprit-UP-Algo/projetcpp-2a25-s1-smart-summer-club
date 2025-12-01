@@ -1,28 +1,22 @@
-QT += core gui widgets sql charts printsupport
+QT       += core gui widgets sql charts printsupport
 
 CONFIG += c++11
 
-TARGET = Atelier_Connexion
-TEMPLATE = app
-
 SOURCES += \
-    authen.cpp \
-    login.cpp \
     main.cpp \
+    connection.cpp \
+    login.cpp \
     mainwindow.cpp \
-    employe.cpp \
-    connection.cpp
+    employe.cpp
 
 HEADERS += \
-    authen.h \
+    connection.h \
     login.h \
     mainwindow.h \
-    employe.h \
-    connection.h
+    employe.h
 
 FORMS += \
-    authen.ui \
     mainwindow.ui
 
-# Pour éviter les warnings sur l'encodage
-DEFINES += QT_DEPRECATED_WARNINGS
+# Pour éviter des soucis de chemin
+INCLUDEPATH += .

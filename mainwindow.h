@@ -19,56 +19,34 @@ public:
     ~MainWindow();
 
 private slots:
-
-    // MENU (protection accès)
+    // menu
     void onMenuButtonClicked();
 
-    // ===== GESTION EMPLOYÉS =====
-    void afficherEmployes();
+    // CRUD / actions
+    void on_pushButton_ajouter_clicked();
+    void on_pushButton_6_clicked();   // modifier
+    void on_pushButton_7_clicked();   // supprimer
+    void on_pushButton_12_clicked();  // tri
+    void on_pushButton_10_clicked();  // export PDF
+    void on_pushButton_imprimer_clicked();
+    void on_pushButton_11_clicked();  // recherche
+    void on_pushButton_8_clicked();   // stats
+    void on_pushButton_9_clicked();   // déconnexion
+    void on_tableWidget_cellClicked(int row, int column);
 
-    // ===== VALIDATIONS =====
+    // validations (moc les voit comme slots dans certains projets)
     bool validerGenre(const QString &genre);
     bool validerEmail(const QString &email);
     bool validerTelephone(const QString &telephone);
     bool validerDate(const QString &date);
 
-    // ===== CRUD =====
-    void on_pushButton_ajouter_clicked();
-    void on_pushButton_6_clicked();   // modifier
-    void on_pushButton_7_clicked();   // supprimer
-
-    // ===== TABLE =====
-    void on_tableWidget_cellClicked(int row, int column);
-
-    // ===== TRI =====
-    void on_pushButton_12_clicked();
-
-    // ===== EXPORT PDF =====
-    void on_pushButton_10_clicked();
-
-    // ===== IMPRESSION DIRECTE =====
-    void on_pushButton_imprimer_clicked();
-
-    // ===== STATISTIQUES =====
-    void on_pushButton_8_clicked();
-
-    // ===== RECHERCHE =====
-    void on_pushButton_11_clicked();
-
-    // ===== DECONNEXION =====
-    void on_pushButton_9_clicked();
-
 private:
     Ui::MainWindow *ui;
 
-    // Informations sur l'utilisateur connecté
-    QString m_posteUser;   // poste de l'employé connecté
-    int m_idUser;          // ID employé connecté
+    QString m_posteUser;  // poste connecté (colonne POSTE)
+    int m_idUser;         // ID employé connecté
 
-    // Gestion permissions
-    bool aLeDroit(const QString &action);
-
-    // Génération HTML pour les attestations
+    void afficherEmployes();
     QString construireAttestationHtml(const QString &mode,
                                       const QString &id,
                                       const QString &nom,
@@ -78,6 +56,8 @@ private:
                                       const QString &naissance,
                                       const QString &adresse,
                                       const QString &salaire);
+    bool aLeDroit(const QString &action); // même si on renvoie toujours true
+
 };
 
 #endif // MAINWINDOW_H
