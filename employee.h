@@ -4,6 +4,7 @@
 #include <QString>
 #include <QDate>
 #include <QSqlQueryModel>
+#include <QPair>
 
 class Employee
 {
@@ -21,32 +22,43 @@ private:
     double salaire;
 
 public:
+    // Constructeurs
     Employee();
-    // Constructor for adding (without ID)
     Employee(QString n, QString p, QString pos, QString fonc, QString g,
              QString e, QString tel, QDate dn, QString adr, double sal);
-    // Constructor with ID (for modify)
     Employee(int id, QString n, QString p, QString pos, QString fonc, QString g,
              QString e, QString tel, QDate dn, QString adr, double sal);
 
-    // Getters
-    int getId() const;
-    QString getNom() const;
-    QString getPrenom() const;
-    QString getPoste() const;
-    QString getFonction() const;
-    QString getGenre() const;
-    QString getEmail() const;
-    QString getTelephone() const;
-    QDate getDateNaissance() const;
-    QString getAdresse() const;
-    double getSalaire() const;
+    // Constructeur avec seulement l'ID
+    Employee(int id);
 
-    // CRUD operations
+    // Getters
+    int getId() const { return id_employee; }
+    QString getNom() const { return nom; }
+    QString getPrenom() const { return prenom; }
+    QString getPoste() const { return poste; }
+    QString getFonction() const { return fonction; }
+    QString getGenre() const { return genre; }
+    QString getEmail() const { return email; }
+    QString getTelephone() const { return telephone; }
+    QString getAdresse() const { return adresse; }
+    QDate getDateNaissance() const { return date_naissance; }
+    double getSalaire() const { return salaire; }
+
+    // Méthodes CRUD
     bool ajouter();
     bool supprimer(int id);
     bool modifier();
+
+    // Rechercher et trier
     QSqlQueryModel* afficher();
+    QSqlQueryModel* rechercherParId(int id);
+    QSqlQueryModel* trierParId();
+    QSqlQueryModel* trierParNom();
+    QSqlQueryModel* trierParPrenom();
+
+    // Statistiques
+    QPair<double,double> calculerPourcentageGenre();
 };
 
 #endif // EMPLOYEE_H

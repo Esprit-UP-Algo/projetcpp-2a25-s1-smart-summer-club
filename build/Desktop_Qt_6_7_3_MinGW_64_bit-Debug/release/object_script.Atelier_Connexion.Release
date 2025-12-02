@@ -1,3 +1,4 @@
+release/login.o
 release/main.o
 release/mainwindow.o
 release/abonne.o
@@ -6,7 +7,10 @@ release/employee.o
 release/employeewindow.o
 release/abonnewindow.o
 release/smtp.o
+release/authen.o
+release/moc_login.o
 release/moc_mainwindow.o
 release/moc_employeewindow.o
 release/moc_abonnewindow.o
 release/moc_smtp.o
+release/moc_authen.o

@@ -1,3 +1,4 @@
+debug/login.o
 debug/main.o
 debug/mainwindow.o
 debug/abonne.o
@@ -6,7 +7,10 @@ debug/employee.o
 debug/employeewindow.o
 debug/abonnewindow.o
 debug/smtp.o
+debug/authen.o
+debug/moc_login.o
 debug/moc_mainwindow.o
 debug/moc_employeewindow.o
 debug/moc_abonnewindow.o
 debug/moc_smtp.o
+debug/moc_authen.o

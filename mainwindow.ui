@@ -13,6 +13,30 @@
   <property name="windowTitle">
    <string>Gestion</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">
+    QWidget {
+        background-color: #e8f1ff;
+        font: 10pt "Segoe UI";
+    }
+    QPushButton {
+        background-color: #ff8c42;
+        color: white;
+        border-radius: 10px;
+        padding: 6px;
+        font-weight: bold;
+    }
+    QPushButton:hover {
+        background-color: #e6762e;
+    }
+    QPushButton:pressed {
+        background-color: #cc5f20;
+    }
+    QLabel {
+        color: #003366;
+    }
+   </string>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout">
     <item>

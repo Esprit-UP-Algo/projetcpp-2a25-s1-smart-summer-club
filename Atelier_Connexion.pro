@@ -25,6 +25,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+    login.cpp \
     main.cpp \
     mainwindow.cpp \
     abonne.cpp \
@@ -32,21 +33,25 @@ SOURCES += \
     employee.cpp \
     employeewindow.cpp \
     abonnewindow.cpp \
-    smtp.cpp
+    smtp.cpp \
+    authen.cpp
 
 HEADERS += \
+    login.h \
     mainwindow.h \
     abonne.h \
     connection.h \
     employee.h \
     employeewindow.h \
     abonnewindow.h \
-    smtp.h
+    smtp.h \
+    authen.h
 
 FORMS += \
         mainwindow.ui \
         abonnewindow.ui \
-        employeewindow.ui
+        employeewindow.ui \
+        authen.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

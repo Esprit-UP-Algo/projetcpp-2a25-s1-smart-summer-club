@@ -6,24 +6,54 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>900</width>
+    <width>960</width>
     <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Gestion Employee</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">
+    QWidget {
+        background-color: #e8f1ff;
+        font: 10pt "Segoe UI";
+    }
+    QLineEdit, QDateEdit {
+        border: 2px solid #1f4e79;
+        border-radius: 6px;
+        padding: 4px;
+        background: #ffffff;
+    }
+    QTableView {
+        border: 2px solid #1f4e79;
+        background: #ffffff;
+        alternate-background-color: #f2f6ff;
+    }
+    QPushButton {
+        background-color: #ff8c42;
+        color: white;
+        border-radius: 10px;
+        padding: 6px;
+        font-weight: bold;
+    }
+    QPushButton:hover {
+        background-color: #e6762e;
+    }
+    QPushButton:pressed {
+        background-color: #cc5f20;
+    }
+   </string>
+  </property>
+
   <widget class="QWidget" name="centralwidget">
+
+   <!-- TableView -->
    <widget class="QTableView" name="tableView">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>20</y>
-      <width>860</width>
-      <height>250</height>
-     </rect>
-    </property>
+    <property name="geometry"><rect><x>20</x><y>20</y><width>920</width><height>250</height></rect></property>
    </widget>
+
+   <!-- LineEdits pour infos employés -->
    <widget class="QLineEdit" name="lineEdit_nom">
     <property name="geometry"><rect><x>100</x><y>290</y><width>200</width><height>25</height></rect></property>
     <property name="placeholderText"><string>Nom</string></property>
@@ -64,6 +94,8 @@
     <property name="geometry"><rect><x>400</x><y>450</y><width>200</width><height>25</height></rect></property>
     <property name="placeholderText"><string>Salaire</string></property>
    </widget>
+
+   <!-- Boutons CRUD -->
    <widget class="QPushButton" name="pushButton_ajouter">
     <property name="geometry"><rect><x>650</x><y>290</y><width>100</width><height>30</height></rect></property>
     <property name="text"><string>Ajouter</string></property>
@@ -76,6 +108,42 @@
     <property name="geometry"><rect><x>650</x><y>390</y><width>100</width><height>30</height></rect></property>
     <property name="text"><string>Supprimer</string></property>
    </widget>
+
+   <!-- Recherche et tri -->
+   <widget class="QPushButton" name="pushButton_recherche">
+    <property name="geometry"><rect><x>100</x><y>500</y><width>100</width><height>30</height></rect></property>
+    <property name="text"><string>Recherche</string></property>
+   </widget>
+   <widget class="QLabel" name="label_recherche">
+    <property name="geometry"><rect><x>210</x><y>500</y><width>50</width><height>25</height></rect></property>
+    <property name="text"><string>ID</string></property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_recherche">
+    <property name="geometry"><rect><x>270</x><y>500</y><width>200</width><height>25</height></rect></property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_tri">
+    <property name="geometry"><rect><x>480</x><y>500</y><width>100</width><height>30</height></rect></property>
+    <property name="text"><string>Tri</string></property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_tri">
+    <property name="geometry"><rect><x>590</x><y>500</y><width>120</width><height>25</height></rect></property>
+    <item><property name="text"><string>ID</string></property></item>
+    <item><property name="text"><string>Nom</string></property></item>
+    <item><property name="text"><string>Prénom</string></property></item>
+   </widget>
+
+   <!-- Bouton Statistique -->
+   <widget class="QPushButton" name="pushButton_statistique">
+    <property name="geometry"><rect><x>720</x><y>500</y><width>100</width><height>30</height></rect></property>
+    <property name="text"><string>Statistique</string></property>
+   </widget>
+
+   <!-- Bouton Attestation -->
+   <widget class="QPushButton" name="pushButton_attestation">
+    <property name="geometry"><rect><x>840</x><y>500</y><width>100</width><height>30</height></rect></property>
+    <property name="text"><string>Attestation</string></property>
+   </widget>
+
   </widget>
  </widget>
  <resources/>

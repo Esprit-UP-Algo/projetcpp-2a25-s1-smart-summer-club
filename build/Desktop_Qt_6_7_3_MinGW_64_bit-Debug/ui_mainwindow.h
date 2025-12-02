@@ -35,6 +35,28 @@ public:
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName("MainWindow");
         MainWindow->resize(400, 200);
+        MainWindow->setStyleSheet(QString::fromUtf8("\n"
+"    QWidget {\n"
+"        background-color: #e8f1ff;\n"
+"        font: 10pt \"Segoe UI\";\n"
+"    }\n"
+"    QPushButton {\n"
+"        background-color: #ff8c42;\n"
+"        color: white;\n"
+"        border-radius: 10px;\n"
+"        padding: 6px;\n"
+"        font-weight: bold;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #e6762e;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: #cc5f20;\n"
+"    }\n"
+"    QLabel {\n"
+"        color: #003366;\n"
+"    }\n"
+"   "));
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName("centralwidget");
         vboxLayout = new QVBoxLayout(centralwidget);

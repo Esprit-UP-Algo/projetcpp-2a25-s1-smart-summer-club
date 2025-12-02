@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "login.h"
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -27,9 +29,20 @@ void MainWindow::openAbonneWindow()
     abonneWindow->show();
 }
 
+
+
 void MainWindow::openEmployeeWindow()
 {
-    if (!employeeWindow)
-        employeeWindow = new EmployeeWindow(this);
-    employeeWindow->show();
+    // 1. Show login dialog first
+    Login loginDialog(this);
+    if (loginDialog.exec() == QDialog::Accepted) {
+        // Login successful, open EmployeeWindow
+        if (!employeeWindow)
+            employeeWindow = new EmployeeWindow(this);
+        employeeWindow->show();
+    } else {
+        // Login failed or cancelled
+        QMessageBox::warning(this, "Accès refusé", "Authentification requise !");
+    }
 }
+
