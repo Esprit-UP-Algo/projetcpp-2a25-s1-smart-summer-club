@@ -1,32 +1,26 @@
 #include "mainwindow.h"
-#include "connection.h"
-
 #include <QApplication>
 #include <QMessageBox>
-
+#include "connection.h"
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-
-    Connection connection;
-    if (!connection.open()) {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setWindowTitle(QObject::tr("Erreur base de données"));
-        msgBox.setText(QObject::tr("Impossible d'ouvrir la base. Vérifiez dbconfig.ini."));
-        QString detail = connection.lastError();
-        if (!detail.isEmpty()) {
-            detail.prepend(QObject::tr("Erreur SQL : "));
-        } else {
-            detail = QObject::tr("Aucun message d'erreur SQL n'a été fourni.");
-        }
-        detail += QObject::tr("\nFichier utilisé : %1").arg(connection.configPath());
-        msgBox.setInformativeText(detail);
-        msgBox.exec();
-        return EXIT_FAILURE;
-    }
-
     MainWindow w;
-    w.show();
+    Connection c;
+    bool test=c.createconnect();
+    if(test)
+    {w.show();
+        QMessageBox::information(nullptr, QObject::tr("database is open"),
+                                 QObject::tr("connection successful.\n"
+                                             "Click Cancel to exit."), QMessageBox::Cancel);
+
+    }
+    else
+        QMessageBox::critical(nullptr, QObject::tr("database is not open"),
+                              QObject::tr("connection failed.\n"
+                                          "Click Cancel to exit."), QMessageBox::Cancel);
+
+
+
     return a.exec();
 }

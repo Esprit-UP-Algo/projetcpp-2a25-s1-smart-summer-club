@@ -163,7 +163,7 @@ QTabBar::tab:!selected {
 }</string>
     </property>
     <property name="currentIndex">
-     <number>3</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab_activites">
      <attribute name="title">
@@ -404,8 +404,7 @@ QLabel#errorLabel {
         </rect>
        </property>
        <property name="styleSheet">
-        <string notr="true">color: rgb(255, 255, 255);
-background-color: rgb(255, 255, 255);</string>
+        <string notr="true"/>
        </property>
       </widget>
       <widget class="QLabel" name="label_duree">

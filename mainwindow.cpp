@@ -505,7 +505,7 @@ void MainWindow::on_pushButton_trier_clicked()
 void MainWindow::on_pushButton_export_clicked()
 {
     const QString defaultFileName = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation)
-        + QStringLiteral("/activites_rapport.pdf");
+    + QStringLiteral("/activites_rapport.pdf");
     const QString fileName = QFileDialog::getSaveFileName(this,
                                                           tr("Exporter le rapport PDF"),
                                                           defaultFileName,
@@ -526,7 +526,7 @@ void MainWindow::on_pushButton_export_clicked()
         return;
     }
 
-    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("SMART_SUMMER_DB"));
+    QSqlDatabase db = QSqlDatabase::database();
     if (!db.isOpen()) {
         QMessageBox::critical(this, tr("Erreur"), tr("Base de données non ouverte."));
         painter.end();
@@ -550,21 +550,22 @@ void MainWindow::on_pushButton_export_clicked()
     const int totalActivites = activite.statistiques();
 
     QString html = QStringLiteral(
-        "<html><head><meta charset='UTF-8'></head><body>"
-        "<h1 style='text-align:center; color:#2c3e50;'>Rapport des Activités</h1>"
-        "<p style='text-align:center; font-size:12pt;'><strong>Total des activités : %1</strong></p>"
-        "<hr>"
-        "<h2 style='color:#34495e;'>Liste des Activités</h2>"
-        "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse:collapse; width:100%%; font-size:9pt;'>"
-        "<tr style='background-color:#3498db; color:white;'>"
-        "<th>ID</th><th>Nom</th><th>Description</th><th>Durée (min)</th><th>Lieu</th><th>Participants Max</th><th>Responsable</th>"
-        "</tr>"
-    ).arg(totalActivites);
+                       "<html><head><meta charset='UTF-8'></head>"
+                       "<body style='color:black;'>"
+                       "<h1 style='text-align:center; color:black;'>Rapport des Activités</h1>"
+                       "<p style='text-align:center; font-size:12pt; color:black;'><strong>Total des activités : %1</strong></p>"
+                       "<hr>"
+                       "<h2 style='color:black;'>Liste des Activités</h2>"
+                       "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse:collapse; width:100%; font-size:9pt; color:black;'>"
+                       "<tr style='background-color:#3498db; color:black;'>"
+                       "<th>ID</th><th>Nom</th><th>Description</th><th>Durée (min)</th><th>Lieu</th><th>Participants Max</th><th>Responsable</th>"
+                       "</tr>"
+                       ).arg(totalActivites);
 
     int rowNum = 0;
     while (queryActivites.next()) {
         const QString rowColor = (rowNum % 2 == 0) ? "#ecf0f1" : "#ffffff";
-        html += QStringLiteral("<tr style='background-color:%1;'>").arg(rowColor);
+        html += QStringLiteral("<tr style='background-color:%1; color:black;'>").arg(rowColor);
         html += QStringLiteral("<td>%1</td>").arg(queryActivites.value(0).toString());
         html += QStringLiteral("<td>%1</td>").arg(queryActivites.value(1).toString().toHtmlEscaped());
         html += QStringLiteral("<td>%1</td>").arg(queryActivites.value(2).toString().toHtmlEscaped());
@@ -580,17 +581,17 @@ void MainWindow::on_pushButton_export_clicked()
     if (queryStats.size() > 0) {
         html += QStringLiteral(
             "<hr>"
-            "<h2 style='color:#34495e; margin-top:30px;'>Statistiques par Lieu</h2>"
-            "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse:collapse; width:100%%; font-size:9pt;'>"
-            "<tr style='background-color:#27ae60; color:white;'>"
+            "<h2 style='color:black; margin-top:30px;'>Statistiques par Lieu</h2>"
+            "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse:collapse; width:100%; font-size:9pt; color:black;'>"
+            "<tr style='background-color:#27ae60; color:black;'>"
             "<th>Lieu</th><th>Nombre d'activités</th>"
             "</tr>"
-        );
+            );
 
         int statRowNum = 0;
         while (queryStats.next()) {
             const QString rowColor = (statRowNum % 2 == 0) ? "#d5f4e6" : "#ffffff";
-            html += QStringLiteral("<tr style='background-color:%1;'>").arg(rowColor);
+            html += QStringLiteral("<tr style='background-color:%1; color:black;'>").arg(rowColor);
             html += QStringLiteral("<td>%1</td>").arg(queryStats.value(0).toString().toHtmlEscaped());
             html += QStringLiteral("<td style='text-align:center; font-weight:bold;'>%1</td>").arg(queryStats.value(1).toString());
             html += "</tr>";
@@ -600,12 +601,12 @@ void MainWindow::on_pushButton_export_clicked()
     }
 
     html += QStringLiteral(
-        "<hr>"
-        "<p style='text-align:center; font-size:8pt; color:#7f8c8d; margin-top:30px;'>"
-        "Généré le %1 par Smart Summer Application"
-        "</p>"
-        "</body></html>"
-    ).arg(QDate::currentDate().toString("dd/MM/yyyy"));
+                "<hr>"
+                "<p style='text-align:center; font-size:8pt; color:black; margin-top:30px;'>"
+                "Généré le %1 par Smart Summer Application"
+                "</p>"
+                "</body></html>"
+                ).arg(QDate::currentDate().toString("dd/MM/yyyy"));
 
     QTextDocument doc;
     doc.setHtml(html);
@@ -616,12 +617,12 @@ void MainWindow::on_pushButton_export_clicked()
     QMessageBox::information(this, tr("Succès"), tr("Le rapport PDF a été exporté avec succès.\n\nFichier : %1").arg(fileName));
 }
 
+
 void MainWindow::on_pushButton_refresh_table_clicked()
 {
     refreshTable(m_currentOrderField, m_currentOrder);
     ui->lineEdit_search->clear();
 }
-
 void MainWindow::on_pushButton_generateQR_clicked()
 {
     int row = ui->tableView_activites->currentIndex().row();
@@ -634,23 +635,30 @@ void MainWindow::on_pushButton_generateQR_clicked()
                  ->data(ui->tableView_activites->model()->index(row, 0))
                  .toInt();
 
-    QSqlQuery qry;
-    qry.prepare("SELECT * FROM ACTIVITE WHERE ID = :id");
+    QSqlQuery qry(QSqlDatabase::database());
+    qry.prepare("SELECT ID, NOM, DESCRIPTION, DUREE_SEANCE, LIEU, NB_PARTICIPANTS_MAX, RESPONSABLE_CLUB FROM ACTIVITE WHERE ID = :id");
     qry.bindValue(":id", id);
 
+    if (!qry.exec()) {
+        QMessageBox::critical(this, "Erreur", "Impossible d'exécuter la requête : " );
+        return;
+    }
 
+    if (!qry.next()) {
+        QMessageBox::warning(this, "Erreur", "Aucune activité trouvée avec l'ID spécifié.");
+        return;
+    }
 
-    // IMPORTANT : l'ordre des colonnes doit être le même que dans le CREATE TABLE
-    // ID, NOM, DESCRIPTION, DUREE_SEANCE, LIEU, NB_PARTICIPANTS_MAX, RESPONSABLE_CLUB
+    // Read values from the query
+    int idActivite        = qry.value("ID").toInt();
+    QString nom           = qry.value("NOM").toString();
+    QString description   = qry.value("DESCRIPTION").toString();
+    int duree             = qry.value("DUREE_SEANCE").toInt();
+    QString lieu          = qry.value("LIEU").toString();
+    int participantsMax   = qry.value("NB_PARTICIPANTS_MAX").toInt();
+    QString responsable   = qry.value("RESPONSABLE_CLUB").toString();
 
-    int idActivite        = qry.value(0).toInt();
-    QString nom           = qry.value(1).toString();
-    QString description   = qry.value(2).toString();
-    int duree             = qry.value(3).toInt();
-    QString lieu          = qry.value(4).toString();
-    int participantsMax   = qry.value(5).toInt();
-    QString responsable   = qry.value(6).toString();
-
+    // Construct QR code text
     QString info = QString(
                        "ID: %1\n"
                        "Nom: %2\n"
@@ -667,13 +675,13 @@ void MainWindow::on_pushButton_generateQR_clicked()
                        .arg(participantsMax)
                        .arg(responsable);
 
+    // Generate QR code
     QrCode qr = QrCode::encodeText(info.toUtf8().constData(), QrCode::Ecc::HIGH);
 
     QImage qrImg(qr.getSize(), qr.getSize(), QImage::Format_RGB888);
     for (int y = 0; y < qr.getSize(); y++) {
         for (int x = 0; x < qr.getSize(); x++) {
-            qrImg.setPixel(x, y, qr.getModule(x, y) ? qRgb(0, 0, 0)
-                           : qRgb(255, 255, 255));
+            qrImg.setPixel(x, y, qr.getModule(x, y) ? qRgb(0, 0, 0) : qRgb(255, 255, 255));
         }
     }
 
@@ -684,8 +692,11 @@ void MainWindow::on_pushButton_generateQR_clicked()
     ui->qrcodecommande->setStyleSheet("background:white; border:2px solid #3498db; border-radius:5px;");
 
     QString fileName = QString("activite_%1_qrcode.png").arg(idActivite);
-    qrImg.save(fileName);
+    if (!qrImg.save(fileName)) {
+        QMessageBox::warning(this, "Erreur", "Impossible de sauvegarder le QR code dans le fichier : " + fileName);
+    }
 }
+
 void MainWindow::on_pushButton_stats_clicked()
 {
     refreshStats();
@@ -738,14 +749,14 @@ void MainWindow::on_browseBtn_clicked()
 void MainWindow::on_sendBtn_clicked()
 {
 
-    Smtp* smtp = new Smtp("yassine.shimi02@gmail.com",ui->mail_pass->text(), "smtp.gmail.com");
+    Smtp* smtp = new Smtp("gafsibacem99@gmail.com",ui->mail_pass->text(), "smtp.gmail.com");
     connect(smtp, SIGNAL(status(QString)), this, SLOT(mailSent(QString)));
-    //nbrq rcao bxps phdh
+   // zzko qdvr yvxz pjja
 
     if( !files.isEmpty() )
-        smtp->sendMail("yassine.shimi02@gmail.com", ui->rcpt->text() , ui->subject->text(),ui->msg->toPlainText(), files );
+        smtp->sendMail("gafsibacem99@gmail.com", ui->rcpt->text() , ui->subject->text(),ui->msg->toPlainText(), files );
     else
-        smtp->sendMail("yassine.shimi02@gmail.com", ui->rcpt->text() , ui->subject->text(),ui->msg->toPlainText());
+        smtp->sendMail("gafsibacem99@gmail.com", ui->rcpt->text() , ui->subject->text(),ui->msg->toPlainText());
 }
 void   MainWindow::mailSent(QString status)
 {
