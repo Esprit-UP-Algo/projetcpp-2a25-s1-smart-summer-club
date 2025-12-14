@@ -1,62 +1,63 @@
 #ifndef INSCRIPTION_H
 #define INSCRIPTION_H
 
+#include <QObject>
+#include <QDate>
 #include <QString>
+#include "abonne.h"
+#include "Activite.h"
 
-class QSqlQueryModel;
-class QSqlDatabase;
-
-class Inscription
+class Inscription : public QObject
 {
-private:
-    int id_inscription;
-    int id_abonne;
-    int id_activite;
-    QString date_inscription;   // format: "yyyy-MM-dd"
-    QString statut;             // confirmé | en attente | annulée
-    bool paiement_effectue;
-    double prix;
+    Q_OBJECT
+    Q_PROPERTY(int id READ id WRITE setId)
+    Q_PROPERTY(int idAbonne READ idAbonne WRITE setIdAbonne)
+    Q_PROPERTY(int idActivite READ idActivite WRITE setIdActivite)
+    Q_PROPERTY(QDate dateInscription READ dateInscription WRITE setDateInscription)
+    Q_PROPERTY(QString statut READ statut WRITE setStatut)
+    Q_PROPERTY(bool paiementEffectue READ paiementEffectue WRITE setPaiementEffectue)
+    Q_PROPERTY(double prix READ prix WRITE setPrix)
 
 public:
-    // Constructeurs
-    Inscription();
-    Inscription(int id_inscription, int id_abonne, int id_activite,
-                const QString& date_inscription, const QString& statut,
-                bool paiement_effectue, double prix);
+    enum Statut { EN_ATTENTE, CONFIRME, ANNULE };
+    Q_ENUM(Statut)
+
+    explicit Inscription(QObject* parent = nullptr);
+    Inscription(int id, int idAbonne, int idActivite, const QDate& dateInscription,
+                const QString& statut, bool paiementEffectue, double prix,
+                QObject* parent = nullptr);
 
     // Getters
-    int getIdInscription() const;
-    int getIdAbonne() const;
-    int getIdActivite() const;
-    QString getDateInscription() const;
-    QString getStatut() const;
-    bool getPaiementEffectue() const;
-    double getPrix() const;
+    int id() const;
+    int idAbonne() const;
+    int idActivite() const;
+    QDate dateInscription() const;
+    QString statut() const;
+    bool paiementEffectue() const;
+    double prix() const;
+
+    QString statutToString() const;
+    static QString statutToString(Statut statut);
+    static Statut stringToStatut(const QString& statut);
 
     // Setters
-    void setIdInscription(int);
-    void setIdAbonne(int);
-    void setIdActivite(int);
-    void setDateInscription(const QString&);
-    void setStatut(const QString&);
-    void setPaiementEffectue(bool);
-    void setPrix(double);
+    void setId(int id);
+    void setIdAbonne(int id);
+    void setIdActivite(int id);
+    void setDateInscription(const QDate& date);
+    void setStatut(const QString& statut);
+    void setStatut(Statut statut);
+    void setPaiementEffectue(bool effectue);
+    void setPrix(double prix);
 
-    // Méthodes CRUD
-    bool ajouter() const;
-    bool modifier() const;
-    bool supprimer() const;  // Supprime l'inscription courante
-    bool sauvegarder() const; // Sauvegarde (ajoute ou modifie selon l'ID)
-    static Inscription* charger(int id); // Charge une inscription par ID
-    QSqlQueryModel* afficher() const;
-
-    // Validation
-    bool validerChamps() const;
-
-    // Métiers/utilitaires
-    bool existeDoublon(int idAbonne, int idActivite, int saufId = 0) const;
-    int placesRestantesPourActivite(int idActivite) const;
-    double calculerPrixFinal(int idAbonne, int idActivite, double prixBase) const;
+private:
+    int m_id;
+    int m_idAbonne;
+    int m_idActivite;
+    QDate m_dateInscription;
+    QString m_statut;
+    bool m_paiementEffectue;
+    double m_prix;
 };
 
 #endif // INSCRIPTION_H

@@ -1,35 +1,42 @@
 #ifndef DATABASEMANAGER_H
 #define DATABASEMANAGER_H
 
+#include <QObject>
 #include <QSqlDatabase>
-#include <QString>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QMutex>
+#include <QMessageBox>
 
-class DatabaseManager
+class DatabaseManager : public QObject
 {
-public:
-    enum DatabaseType {
-        SQLite,
-        Oracle
-    };
+    Q_OBJECT
 
-    static DatabaseManager& instance();
-    bool initializeDatabase();
-    bool initializeOracleDatabase(const QString& host, int port, const QString& databaseName, 
-                                  const QString& user, const QString& password);
+public:
+    static DatabaseManager& getInstance();
+    bool connect();
+    void disconnect();
+    bool isConnected() const;
     QSqlDatabase getDatabase() const;
-    DatabaseType getDatabaseType() const { return dbType; }
+    QSqlQuery executeQuery(const QString& query);
+    bool executeTransaction(const QStringList& queries);
+
+    // Test connection
+    bool testConnection();
 
 private:
-    DatabaseManager() = default;
-    ~DatabaseManager() = default;
+    DatabaseManager(QObject* parent = nullptr);
+    ~DatabaseManager();
     DatabaseManager(const DatabaseManager&) = delete;
     DatabaseManager& operator=(const DatabaseManager&) = delete;
 
-    QSqlDatabase db;
-    DatabaseType dbType = SQLite;
+    QSqlDatabase m_database;
+    mutable QMutex m_mutex;
+    static DatabaseManager* m_instance;
+
+    // Helper methods
     bool createTables();
-    bool createTablesSQLite();
-    bool createTablesOracle();
+    bool insertSampleData();
 };
 
 #endif // DATABASEMANAGER_H

@@ -1,264 +1,369 @@
 #include "databasemanager.h"
-#include <QSqlQuery>
-#include <QSqlError>
 #include <QDebug>
-#include <QStandardPaths>
-#include <QDir>
+#include <QApplication>
+#include <QSqlQuery>
 #include <QMessageBox>
 
-DatabaseManager& DatabaseManager::instance()
+DatabaseManager* DatabaseManager::m_instance = nullptr;
+
+DatabaseManager::DatabaseManager(QObject* parent) : QObject(parent)
 {
-    static DatabaseManager instance;
-    return instance;
 }
 
-bool DatabaseManager::initializeDatabase()
+DatabaseManager::~DatabaseManager()
 {
-    // Par défaut, utiliser SQLite
-    dbType = SQLite;
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    
-    QString dbPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    QDir dir;
-    if (!dir.exists(dbPath)) {
-        dir.mkpath(dbPath);
-    }
-    
-    db.setDatabaseName(dbPath + "/smart_summer_club.db");
-    
-    if (!db.open()) {
-        qWarning() << "Erreur d'ouverture de la base de données:" << db.lastError().text();
-        return false;
-    }
-    
-    return createTables();
+    disconnect();
 }
 
-bool DatabaseManager::initializeOracleDatabase(const QString& host, int port, 
-                                                const QString& databaseName,
-                                                const QString& user, const QString& password)
+DatabaseManager& DatabaseManager::getInstance()
 {
-    // Vérifier si le driver Oracle est disponible
-    if (!QSqlDatabase::isDriverAvailable("QOCI")) {
-        qWarning() << "Driver Oracle (QOCI) non disponible. Veuillez installer Oracle Client.";
-        return false;
+    static QMutex mutex;
+    QMutexLocker locker(&mutex);
+    if (!m_instance) {
+        m_instance = new DatabaseManager(qApp);
     }
-
-    dbType = Oracle;
-    
-    // Supprimer la connexion existante si elle existe
-    if (db.isOpen()) {
-        db.close();
-    }
-    QSqlDatabase::removeDatabase("oracle_connection");
-    
-    db = QSqlDatabase::addDatabase("QOCI", "oracle_connection");
-    db.setHostName(host);
-    db.setPort(port);
-    db.setDatabaseName(databaseName); // Pour Oracle, c'est le SID ou Service Name
-    db.setUserName(user);
-    db.setPassword(password);
-    
-    if (!db.open()) {
-        QString errorMsg = "Erreur de connexion à Oracle: " + db.lastError().text();
-        qWarning() << errorMsg;
-        return false;
-    }
-    
-    qDebug() << "Connexion Oracle réussie!";
-    return createTables();
+    return *m_instance;
 }
 
-bool DatabaseManager::createTables()
+bool DatabaseManager::connect()
 {
-    if (dbType == SQLite) {
-        return createTablesSQLite();
-    } else if (dbType == Oracle) {
-        return createTablesOracle();
-    }
-    return false;
-}
+    QMutexLocker locker(&m_mutex);
 
-bool DatabaseManager::createTablesSQLite()
-{
-    QSqlQuery query(db);
-    
-    // Table abonnes
-    if (!query.exec(
-        "CREATE TABLE IF NOT EXISTS abonnes ("
-        "id_abonne INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "nom TEXT NOT NULL,"
-        "prenom TEXT NOT NULL"
-        ")")) {
-        qWarning() << "Erreur création table abonnes:" << query.lastError().text();
+    if (m_database.isOpen()) {
+        qDebug() << "La connexion est déjà établie.";
+        return true;
+    }
+
+    // Configuration Oracle XE 11g
+    m_database = QSqlDatabase::addDatabase("QODBC", "SmartSummerApp_Connection");
+
+    // Set up the connection using a DSN
+    m_database.setDatabaseName("SmartSummerAppDB");
+    m_database.setUserName("SYSTEM");
+    m_database.setPassword("smartsparks");
+    m_database.setConnectOptions("SQL_ATTR_CONNECTION_TIMEOUT=5;SQL_ATTR_LOGIN_TIMEOUT=5");
+
+    if (!m_database.open()) {
+        QString error = m_database.lastError().text();
+        qCritical() << "Échec de la connexion à la base de données:" << error;
+        QMessageBox::critical(nullptr, "Erreur de connexion", 
+                            "Impossible de se connecter à la base de données.\n"
+                            "Veuillez vérifier que le service Oracle est démarré.\n"
+                            "Détails: " + error);
         return false;
     }
     
-    // Table activites
-    if (!query.exec(
-        "CREATE TABLE IF NOT EXISTS activites ("
-        "id_activite INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "nom TEXT NOT NULL,"
-        "prix REAL NOT NULL,"
-        "capacite_max INTEGER DEFAULT 50"
-        ")")) {
-        qWarning() << "Erreur création table activites:" << query.lastError().text();
+    // Configuration de la session
+    QSqlQuery sessionQuery(m_database);
+    if (!sessionQuery.exec("ALTER SESSION SET NLS_DATE_FORMAT = 'DD/MM/YYYY'")) {
+        qWarning() << "Impossible de définir le format de date:" << sessionQuery.lastError().text();
+    }
+
+    // Vérification de la connexion
+    QSqlQuery testQuery(m_database);
+    if (!testQuery.exec("SELECT 1 FROM DUAL")) {
+        QString error = testQuery.lastError().text();
+        qCritical() << "Test de connexion échoué:" << error;
+        m_database.close();
         return false;
     }
+
+    qDebug() << "Connexion à la base de données établie avec succès.";
     
-    // Table inscriptions
-    if (!query.exec(
-        "CREATE TABLE IF NOT EXISTS inscriptions ("
-        "id_inscription INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "id_abonne INTEGER NOT NULL,"
-        "id_activite INTEGER NOT NULL,"
-        "date_inscription TEXT NOT NULL,"
-        "statut TEXT NOT NULL CHECK(statut IN ('confirmé', 'en attente', 'annulée')),"
-        "paiement_effectue INTEGER NOT NULL DEFAULT 0,"
-        "prix REAL NOT NULL,"
-        "FOREIGN KEY(id_abonne) REFERENCES abonnes(id_abonne),"
-        "FOREIGN KEY(id_activite) REFERENCES activites(id_activite)"
-        ")")) {
-        qWarning() << "Erreur création table inscriptions:" << query.lastError().text();
+    // Création des tables si nécessaire
+    if (!createTables()) {
+        qCritical() << "Échec lors de la création des tables.";
         return false;
     }
-    
-    // Insérer quelques données de test si les tables sont vides
-    query.exec("SELECT COUNT(*) FROM abonnes");
-    if (query.next() && query.value(0).toInt() == 0) {
-        query.exec("INSERT INTO abonnes (nom, prenom) VALUES ('Dupont', 'Jean'), ('Martin', 'Marie'), ('Bernard', 'Pierre')");
-    }
-    
-    query.exec("SELECT COUNT(*) FROM activites");
-    if (query.next() && query.value(0).toInt() == 0) {
-        query.exec("INSERT INTO activites (nom, prix, capacite_max) VALUES "
-                   "('Natation', 50.0, 30), "
-                   "('Tennis', 40.0, 20), "
-                   "('Football', 35.0, 25)");
-    }
-    
+
     return true;
 }
 
-bool DatabaseManager::createTablesOracle()
+void DatabaseManager::disconnect()
 {
-    QSqlQuery query(db);
-    
-    // Créer les séquences pour Oracle (ignorer si elles existent déjà)
-    query.exec("CREATE SEQUENCE seq_abonnes START WITH 1 INCREMENT BY 1");
-    if (query.lastError().isValid() && !query.lastError().text().contains("ORA-00955")) {
-        qWarning() << "Erreur création séquence abonnes:" << query.lastError().text();
+    QMutexLocker locker(&m_mutex);
+    if (m_database.isOpen()) {
+        m_database.close();
     }
-    
-    query.exec("CREATE SEQUENCE seq_activites START WITH 1 INCREMENT BY 1");
-    if (query.lastError().isValid() && !query.lastError().text().contains("ORA-00955")) {
-        qWarning() << "Erreur création séquence activites:" << query.lastError().text();
-    }
-    
-    query.exec("CREATE SEQUENCE seq_inscriptions START WITH 1 INCREMENT BY 1");
-    if (query.lastError().isValid() && !query.lastError().text().contains("ORA-00955")) {
-        qWarning() << "Erreur création séquence inscriptions:" << query.lastError().text();
-    }
-    
-    // Table abonnes (Oracle)
-    if (!query.exec(
-        "CREATE TABLE abonnes ("
-        "id_abonne NUMBER PRIMARY KEY,"
-        "nom VARCHAR2(100) NOT NULL,"
-        "prenom VARCHAR2(100) NOT NULL"
-        ")")) {
-        // Ignorer l'erreur si la table existe déjà
-        if (!query.lastError().text().contains("ORA-00955")) {
-            qWarning() << "Erreur création table abonnes:" << query.lastError().text();
-        }
-    }
-    
-    // Trigger pour auto-incrémenter id_abonne
-    query.exec(
-        "CREATE OR REPLACE TRIGGER trg_abonnes_id "
-        "BEFORE INSERT ON abonnes "
-        "FOR EACH ROW "
-        "BEGIN "
-        "  IF :NEW.id_abonne IS NULL THEN "
-        "    SELECT seq_abonnes.NEXTVAL INTO :NEW.id_abonne FROM DUAL; "
-        "  END IF; "
-        "END;"
-    );
-    
-    // Table activites (Oracle)
-    if (!query.exec(
-        "CREATE TABLE activites ("
-        "id_activite NUMBER PRIMARY KEY,"
-        "nom VARCHAR2(100) NOT NULL,"
-        "prix NUMBER(10,2) NOT NULL,"
-        "capacite_max NUMBER DEFAULT 50"
-        ")")) {
-        if (!query.lastError().text().contains("ORA-00955")) {
-            qWarning() << "Erreur création table activites:" << query.lastError().text();
-        }
-    }
-    
-    // Trigger pour auto-incrémenter id_activite
-    query.exec(
-        "CREATE OR REPLACE TRIGGER trg_activites_id "
-        "BEFORE INSERT ON activites "
-        "FOR EACH ROW "
-        "BEGIN "
-        "  IF :NEW.id_activite IS NULL THEN "
-        "    SELECT seq_activites.NEXTVAL INTO :NEW.id_activite FROM DUAL; "
-        "  END IF; "
-        "END;"
-    );
-    
-    // Table inscriptions (Oracle)
-    if (!query.exec(
-        "CREATE TABLE inscriptions ("
-        "id_inscription NUMBER PRIMARY KEY,"
-        "id_abonne NUMBER NOT NULL,"
-        "id_activite NUMBER NOT NULL,"
-        "date_inscription DATE NOT NULL,"
-        "statut VARCHAR2(20) NOT NULL CHECK(statut IN ('confirmé', 'en attente', 'annulée')),"
-        "paiement_effectue NUMBER(1) NOT NULL DEFAULT 0,"
-        "prix NUMBER(10,2) NOT NULL,"
-        "CONSTRAINT fk_abonne FOREIGN KEY(id_abonne) REFERENCES abonnes(id_abonne),"
-        "CONSTRAINT fk_activite FOREIGN KEY(id_activite) REFERENCES activites(id_activite)"
-        ")")) {
-        if (!query.lastError().text().contains("ORA-00955")) {
-            qWarning() << "Erreur création table inscriptions:" << query.lastError().text();
-        }
-    }
-    
-    // Trigger pour auto-incrémenter id_inscription
-    query.exec(
-        "CREATE OR REPLACE TRIGGER trg_inscriptions_id "
-        "BEFORE INSERT ON inscriptions "
-        "FOR EACH ROW "
-        "BEGIN "
-        "  IF :NEW.id_inscription IS NULL THEN "
-        "    SELECT seq_inscriptions.NEXTVAL INTO :NEW.id_inscription FROM DUAL; "
-        "  END IF; "
-        "END;"
-    );
-    
-    // Insérer quelques données de test si les tables sont vides
-    query.exec("SELECT COUNT(*) FROM abonnes");
-    if (query.next() && query.value(0).toInt() == 0) {
-        query.exec("INSERT INTO abonnes (nom, prenom) VALUES ('Dupont', 'Jean')");
-        query.exec("INSERT INTO abonnes (nom, prenom) VALUES ('Martin', 'Marie')");
-        query.exec("INSERT INTO abonnes (nom, prenom) VALUES ('Bernard', 'Pierre')");
-    }
-    
-    query.exec("SELECT COUNT(*) FROM activites");
-    if (query.next() && query.value(0).toInt() == 0) {
-        query.exec("INSERT INTO activites (nom, prix, capacite_max) VALUES ('Natation', 50.0, 30)");
-        query.exec("INSERT INTO activites (nom, prix, capacite_max) VALUES ('Tennis', 40.0, 20)");
-        query.exec("INSERT INTO activites (nom, prix, capacite_max) VALUES ('Football', 35.0, 25)");
-    }
-    
-    return true;
+}
+
+bool DatabaseManager::isConnected() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_database.isOpen();
 }
 
 QSqlDatabase DatabaseManager::getDatabase() const
 {
-    return db;
+    return m_database;
+}
+
+QSqlQuery DatabaseManager::executeQuery(const QString& queryStr)
+{
+    QMutexLocker locker(&m_mutex);
+    QSqlQuery query(m_database);
+    if (!query.exec(queryStr)) {
+        qDebug() << "Erreur query:" << query.lastError().text();
+    }
+    return query;
+}
+
+bool DatabaseManager::executeTransaction(const QStringList& queries)
+{
+    QMutexLocker locker(&m_mutex);
+    if (!m_database.transaction()) {
+        qDebug() << "Transaction échouée";
+        return false;
+    }
+
+    foreach (const QString& queryStr, queries) {
+        QSqlQuery query(m_database);
+        if (!query.exec(queryStr)) {
+            qDebug() << "Query échouée:" << query.lastError().text();
+            m_database.rollback();
+            return false;
+        }
+    }
+
+    return m_database.commit();
+}
+
+bool DatabaseManager::testConnection()
+{
+    return isConnected();
+}
+
+bool DatabaseManager::createTables()
+{
+    QMutexLocker locker(&m_mutex);
+    QSqlQuery query(m_database);
+    bool success = true;
+
+    // Désactiver temporairement les contraintes de clé étrangère
+    if (!query.exec("ALTER SESSION SET CONSTRAINTS = DEFERRED")) {
+        qWarning() << "Impossible de désactiver les contraintes:" << query.lastError().text();
+    }
+
+    // Fonction utilitaire pour exécuter les requêtes avec gestion d'erreur
+    auto executeQuery = [&](const QString& sql) -> bool {
+        if (!query.exec(sql)) {
+            qWarning() << "Erreur lors de l'exécution de la requête:" << query.lastError().text();
+            qDebug() << "Requête en échec:" << sql;
+            return false;
+        }
+        return true;
+    };
+
+    // Table ABONNE
+    const QString createAbonneTable = 
+    "BEGIN "
+    "   BEGIN "
+    "       EXECUTE IMMEDIATE 'CREATE TABLE ABONNE ("
+    "           ID_ABONNE NUMBER PRIMARY KEY, "
+    "           NOM VARCHAR2(100) NOT NULL, "
+    "           PRENOM VARCHAR2(100) NOT NULL, "
+    "           DATE_NAISSANCE DATE, "
+    "           ADRESSE VARCHAR2(200), "
+    "           TELEPHONE VARCHAR2(20), "
+    "           EMAIL VARCHAR2(100), "
+    "           DATE_INSCRIPTION DATE DEFAULT SYSDATE, "
+    "           CONSTRAINT CHK_EMAIL CHECK (EMAIL LIKE ''%@%.%''), "
+    "           CONSTRAINT CHK_TELEPHONE CHECK (REGEXP_LIKE(TELEPHONE, ''^[0-9+() -]+$''))"
+    "       )';"
+    "   EXCEPTION "
+    "       WHEN OTHERS THEN "
+    "           IF SQLCODE = -955 THEN NULL; "
+    "           ELSE RAISE; "
+    "           END IF; "
+    "   END; "
+    "END;";
+
+    // Séquence pour ABONNE
+    const QString createAbonneSeq = 
+    "DECLARE "
+    "   v_count NUMBER; "
+    "BEGIN "
+    "   SELECT COUNT(*) INTO v_count FROM user_sequences WHERE sequence_name = 'SEQ_ABONNE'; "
+    "   IF v_count = 0 THEN "
+    "       EXECUTE IMMEDIATE 'CREATE SEQUENCE SEQ_ABONNE "
+    "           START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';"
+    "   END IF; "
+    "END;";
+
+    // Table ACTIVITE
+    const QString createActiviteTable = 
+    "BEGIN "
+    "   BEGIN "
+    "       EXECUTE IMMEDIATE 'CREATE TABLE ACTIVITE ("
+    "           ID_ACTIVITE NUMBER PRIMARY KEY, "
+    "           NOM VARCHAR2(100) NOT NULL, "
+    "           DESCRIPTION VARCHAR2(500), "
+    "           DUREE_SEANCE NUMBER, "
+    "           LIEU VARCHAR2(100), "
+    "           NB_PARTICIPANTS_MAX NUMBER, "
+    "           DATE_CREATION DATE DEFAULT SYSDATE, "
+    "           CONSTRAINT CHK_DUREE CHECK (DUREE_SEANCE > 0), "
+    "           CONSTRAINT CHK_PARTICIPANTS CHECK (NB_PARTICIPANTS_MAX > 0)"
+    "       )';"
+    "   EXCEPTION "
+    "       WHEN OTHERS THEN "
+    "           IF SQLCODE = -955 THEN NULL; "
+    "           ELSE RAISE; "
+    "           END IF; "
+    "   END; "
+    "END;";
+
+    // Table INSCRIPTION avec contraintes améliorées
+    const QString createInscriptionTable = 
+    "BEGIN "
+    "   BEGIN "
+    "       EXECUTE IMMEDIATE 'CREATE TABLE INSCRIPTION ("
+    "           ID_INSCRIPTION NUMBER PRIMARY KEY, "
+    "           ID_ABONNE NUMBER NOT NULL, "
+    "           ID_ACTIVITE NUMBER NOT NULL, "
+    "           DATE_INSCRIPTION DATE DEFAULT SYSDATE, "
+    "           STATUT VARCHAR2(20) DEFAULT ''EN ATTENTE'' "
+    "               CHECK (STATUT IN (''EN ATTENTE'', ''CONFIRMEE'', ''ANNULEE'')), "
+    "           PAIEMENT_EFFECTUE VARCHAR2(1) DEFAULT ''N'' "
+    "               CHECK (PAIEMENT_EFFECTUE IN (''O'', ''N'')), "
+    "           PRIX NUMBER(10,2), "
+    "           DATE_MODIFICATION TIMESTAMP DEFAULT SYSTIMESTAMP, "
+    "           CONSTRAINT FK_INSCRIPTION_ABONNE FOREIGN KEY (ID_ABONNE) "
+    "               REFERENCES ABONNE(ID_ABONNE) ON DELETE CASCADE, "
+    "           CONSTRAINT FK_INSCRIPTION_ACTIVITE FOREIGN KEY (ID_ACTIVITE) "
+    "               REFERENCES ACTIVITE(ID_ACTIVITE) ON DELETE CASCADE, "
+    "           CONSTRAINT UQ_INSCRIPTION UNIQUE (ID_ABONNE, ID_ACTIVITE), "
+    "           CONSTRAINT CHK_PRIX CHECK (PRIX >= 0)"
+    "       )';"
+    "   EXCEPTION "
+    "       WHEN OTHERS THEN "
+    "           IF SQLCODE = -955 THEN NULL; "
+    "           ELSE RAISE; "
+    "           END IF; "
+    "   END; "
+    "END;";
+
+    // Exécution des requêtes
+    success &= executeQuery(createAbonneTable);
+    success &= executeQuery(createAbonneSeq);
+    success &= executeQuery(createActiviteTable);
+    success &= executeQuery(createInscriptionTable);
+
+    // Création des index pour améliorer les performances
+    const QString createIndexes = 
+    "BEGIN "
+    "   -- Index sur les champs de recherche fréquents "
+    "   BEGIN "
+    "       EXECUTE IMMEDIATE 'CREATE INDEX IDX_ABONNE_NOM ON ABONNE(NOM)';"
+    "   EXCEPTION WHEN OTHERS THEN NULL; END; "
+    "   BEGIN "
+    "       EXECUTE IMMEDIATE 'CREATE INDEX IDX_ABONNE_PRENOM ON ABONNE(PRENOM)';"
+    "   EXCEPTION WHEN OTHERS THEN NULL; END; "
+    "   BEGIN "
+    "       EXECUTE IMMEDIATE 'CREATE INDEX IDX_ABONNE_EMAIL ON ABONNE(EMAIL)';"
+    "   EXCEPTION WHEN OTHERS THEN NULL; END; "
+    "   BEGIN "
+    "       EXECUTE IMMEDIATE 'CREATE INDEX IDX_INSCRIPTION_DATES ON INSCRIPTION(DATE_INSCRIPTION, ID_ACTIVITE)';"
+    "   EXCEPTION WHEN OTHERS THEN NULL; END; "
+    "END;";
+    
+    success &= executeQuery(createIndexes);
+
+    // Réactiver les contraintes
+    if (!query.exec("ALTER SESSION SET CONSTRAINTS = IMMEDIATE")) {
+        qWarning() << "Impossible de réactiver les contraintes:" << query.lastError().text();
+        success = false;
+    }
+
+    // Vérification de l'intégrité des tables
+    if (success) {
+        qDebug() << "Structure de la base de données vérifiée avec succès.";
+        // Insérer des données de test uniquement si les tables viennent d'être créées
+        QSqlQuery checkQuery("SELECT COUNT(*) FROM ABONNE", m_database);
+        if (checkQuery.next() && checkQuery.value(0).toInt() == 0) {
+            qDebug() << "Insertion des données de test...";
+            insertSampleData();
+        }
+    } else {
+        qCritical() << "Des erreurs sont survenues lors de la création des tables.";
+    }
+
+    return success;
+}
+
+bool DatabaseManager::insertSampleData()
+{
+    QMutexLocker locker(&m_mutex);
+    QSqlQuery query(m_database);
+    
+    // Désactiver temporairement les contraintes
+    query.exec("SET CONSTRAINTS ALL DEFERRED");
+    
+    // Vérifier si des données existent déjà
+    query.exec("SELECT COUNT(*) FROM ABONNE");
+    if (query.next() && query.value(0).toInt() > 0) {
+        qDebug() << "Des données existent déjà, insertion des données de test ignorée.";
+        return true;
+    }
+    
+    // Démarrer une transaction
+    if (!m_database.transaction()) {
+        qWarning() << "Impossible de démarrer la transaction:" << m_database.lastError().text();
+        return false;
+    }
+    
+    try {
+        // Insérer des abonnés de test
+        QStringList abonnes = {
+            "1, 'Dupont', 'Jean', TO_DATE('15/05/1990', 'DD/MM/YYYY'), '123 Rue de Paris', '0123456789', 'jean.dupont@example.com', SYSDATE",
+            "2, 'Martin', 'Sophie', TO_DATE('22/11/1985', 'DD/MM/YYYY'), '456 Avenue des Fleurs', '0612345678', 'sophie.martin@example.com', SYSDATE",
+            "3, 'Dubois', 'Pierre', TO_DATE('03/07/1995', 'DD/MM/YYYY'), '789 Boulevard Voltaire', '0789456123', 'pierre.dubois@example.com', SYSDATE"
+        };
+        
+        foreach (const QString& abonne, abonnes) {
+            if (!query.exec("INSERT INTO ABONNE (ID_ABONNE, NOM, PRENOM, DATE_NAISSANCE, ADRESSE, TELEPHONE, EMAIL, DATE_INSCRIPTION) VALUES (" + abonne + ")")) {
+                throw query.lastError();
+            }
+        }
+        
+        // Insérer des activités de test
+        QStringList activites = {
+            "1, 'Yoga', 'Séance de yoga relaxante', 60, 'Salle 1', 15, SYSDATE",
+            "2, 'Natation', 'Cours de natation pour tous niveaux', 45, 'Piscine', 10, SYSDATE",
+            "3, 'Musculation', 'Renforcement musculaire', 60, 'Salle de musculation', 8, SYSDATE"
+        };
+        
+        foreach (const QString& activite, activites) {
+            if (!query.exec("INSERT INTO ACTIVITE (ID_ACTIVITE, NOM, DESCRIPTION, DUREE_SEANCE, LIEU, NB_PARTICIPANTS_MAX, DATE_CREATION) VALUES (" + activite + ")")) {
+                throw query.lastError();
+            }
+        }
+        
+        // Insérer des inscriptions de test
+        QStringList inscriptions = {
+            "1, 1, 1, SYSDATE, 'CONFIRMEE', 'O', 25.00, SYSTIMESTAMP",
+            "2, 1, 2, SYSDATE, 'EN ATTENTE', 'N', 20.00, SYSTIMESTAMP",
+            "3, 2, 1, SYSDATE, 'CONFIRMEE', 'O', 25.00, SYSTIMESTAMP",
+            "4, 3, 3, SYSDATE, 'CONFIRMEE', 'O', 30.00, SYSTIMESTAMP"
+        };
+        
+        foreach (const QString& inscription, inscriptions) {
+            if (!query.exec("INSERT INTO INSCRIPTION (ID_INSCRIPTION, ID_ABONNE, ID_ACTIVITE, DATE_INSCRIPTION, STATUT, PAIEMENT_EFFECTUE, PRIX, DATE_MODIFICATION) VALUES (" + inscription + ")")) {
+                throw query.lastError();
+            }
+        }
+        
+        // Valider la transaction
+        if (!m_database.commit()) {
+            throw m_database.lastError();
+        }
+        
+        qDebug() << "Données de test insérées avec succès.";
+        return true;
+        
+    } catch (const QSqlError& e) {
+        m_database.rollback();
+        qCritical() << "Erreur lors de l'insertion des données de test:" << e.text();
+        return false;
+    }
 }
