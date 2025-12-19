@@ -1,0 +1,5 @@
+#include "database"
+
+Database::Database(QObject *parent)
+    : QObject{parent}
+{}
